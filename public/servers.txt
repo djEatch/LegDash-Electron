@@ -1,0 +1,7 @@
+name, endpoint
+"FT5EAS","http://gbrpmseasf41.corp.internal:8180/application-status-monitor/rest/applicationstatusmonitor/status.json"
+"bgrblahblah2","http://localhost:3002/legquery"
+"bgrblahblah3","http://localhost:3003/legquery"
+"bgrblahblahA","http://localhost:3001/legquery"
+"bgrblahblahB","http://localhost:3002/legquery"
+"bgrblahblahC","http://localhost:3003/legquery"

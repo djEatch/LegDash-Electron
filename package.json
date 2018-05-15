@@ -1,0 +1,21 @@
+{
+  "name": "electron-leg-dash",
+  "version": "0.1.0",
+  "description": "electron application to report current leg assignments for a given list of servers",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron"
+  ],
+  "author": "DJEatch",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^2.0.0"
+  },
+  "dependencies": {
+    "p5": "^0.6.1"
+  }
+}
