@@ -91,7 +91,7 @@ function requestServerDetails(){
 function getServerDetails(server){
     if(!server.name){
         server.name = server.target.attributes['data-server-name'].value;
-        server.endpoint = server.target.attributes['data-server-endpoint'].value;
+        server.endpoint = server.target.attributes['data-server-endpoint'].value; 
         //server.port = server.target.attributes['data-server-port'].value;
     }
     //let url = "http://" + server.ip + ":" + server.port + '/legquery';
