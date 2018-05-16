@@ -13,8 +13,7 @@
   "author": "DJEatch",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^2.0.0",
-    "electron-winstaller": "^2.6.4"
+    "electron": "^2.0.0"
   },
   "dependencies": {
     "p5": "^0.6.1"
