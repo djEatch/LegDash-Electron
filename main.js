@@ -16,11 +16,11 @@ let csvUrl = './servers.txt';  // URL to web API
 //app.on('ready', () => {readCsvData(), createWindow()})
 app.on('ready', function(){
 
-
+ 
 
     // Create the browser window.
   win = new BrowserWindow({width: 800, height: 600})
-
+  readCsvData()
   // and load the index.html of the app.
   win.loadURL(url.format({
     //pathname: path.join(__dirname, 'public','index.html'),
@@ -39,8 +39,10 @@ app.on('ready', function(){
 
   const winMenu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(winMenu);
-  readCsvData()
+  
   contents = win.webContents;
+
+  
 
   //setup();
 });
@@ -49,6 +51,7 @@ app.on('ready', function(){
 
 function readCsvData() {
   // Asynchronous read
+  serverList = [];
   fs.readFile(csvUrl, function (err, data) {
     if (err) {
       //return console.error(err);
@@ -56,6 +59,15 @@ function readCsvData() {
     }
     extractData(data.toString());
   });
+}
+
+function handleError (error) {
+  // In a real world app, we might use a remote logging infrastructure
+  // We'd also dig deeper into the error to get a better message
+  let errMsg = (error.message) ? error.message :
+    error.status ? `${error.status} - ${error.statusText}` : 'Server error';
+  console.error("ERR: " + errMsg); // log to console instead
+  return errMsg;
 }
 
 function extractData(data) {
@@ -73,6 +85,9 @@ function extractData(data) {
       }
   }
   console.log(serverList);
+
+  //win.webContents.send('drawTable',serverList);
+  win.webContents.send('getAllServerDetails',serverList);
 
   //requestServerDetails();
 }
@@ -115,6 +130,7 @@ function updateServerResults(data, serverName){
   drawTable();
 }
 
+
 function getRequest(callback, url, id){
   var xhr = new http.XMLHttpRequest();
   // xhr.onerror = function(e){
@@ -135,14 +151,10 @@ function getRequest(callback, url, id){
     }  
 }
 
-function handleError (error) {
-  // In a real world app, we might use a remote logging infrastructure
-  // We'd also dig deeper into the error to get a better message
-  let errMsg = (error.message) ? error.message :
-    error.status ? `${error.status} - ${error.statusText}` : 'Server error';
-  console.error("ERR: " + errMsg); // log to console instead
-  return errMsg;
-}
+ipcMain.on('refreshList', function(){
+  readCsvData();
+  //win.webContents.send('drawTable',serverList);
+});
 
 function setup(){
   console.log(serverList);
