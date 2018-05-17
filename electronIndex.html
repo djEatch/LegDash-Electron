@@ -2,17 +2,12 @@
 <html lang="en">
     <head>
     <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <!-- <script language="javascript" type="text/javascript" src="libraries/p5.js"></script>
-    <script language="javascript" src="libraries/p5.dom.js"></script>
-    <script language="javascript" type="text/javascript" src="sketch.js"></script> -->
-        
-    <!-- Bootstrap CSS -->
-    <!-- <link rel="stylesheet" href="libraries/bootstrap.min.css"> -->
+
     <link rel="stylesheet" href="bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
     
     <!-- this line removes any default padding and style. you might only need one of these values set. -->
-    <!-- <style> body {padding: 0; margin: 0;} </style> -->
+    <style> body {padding: 0; margin: 0;} </style>
     
     </head>
 
@@ -53,10 +48,6 @@
             }
 
             function drawTable(){
-                console.log("trying to drraw table");
-                console.log(serverList)
-                //let table = document.getElementById("serverTable").getElementsByTagName('tbody')[0];
-                //table.innerHTML = "";
                 serverTable.innerHTML = "";
                 let i = 0
                 for(let server of serverList){
@@ -72,14 +63,15 @@
                     cell4.innerHTML = server.leg;
 
                     let refButton = document.createElement("button");
-                    refButton.textContent = "REFRESH";
+                    refButton.textContent = "refresh";
                     refButton.type = "button";
-                    refButton.classList = "btn btn-warn";
+                    refButton.classList = "btn btn-outline-warning";
                     refButton.setAttribute('data-server-name',server.name);
                     refButton.setAttribute('data-server-hostname',server.hostname);
                     refButton.setAttribute('data-server-endpoint',server.endpoint);
                     refButton.setAttribute('data-server-port',server.port);
-                    refButton.onclick = getServerDetails;
+                    //refButton.onclick = getServerDetails;
+                    refButton.onclick = individualRefresh;
                     
 
                     if(server.leg != "XLeg") {
@@ -94,29 +86,44 @@
                 }
             }
 
-            ipcRenderer.on('drawTable',drawTable)
-            ipcRenderer.on('getAllServerDetails',function(e,serverData){
-                serverList = serverData;
-                requestServerDetails();
-            })
 
-            function requestServerDetails(){
+            ipcRenderer.on('updateServerList',function(e,serverData){
+                serverList = serverData;
+                drawTable();
+                requestAllServerDetails();
+            })
+            ipcRenderer.on('drawTable',drawTable)
+            ipcRenderer.on('getAllServerDetails',requestAllServerDetails)
+
+            function requestAllServerDetails(){
                 for(let server of serverList){
-                    if(!server.leg){
                         server.leg="querying...";
                         getServerDetails(server);
+                }
+            }
+
+            function individualRefresh(e){
+                for(let server of serverList){
+                    if(server.name == e.target.attributes['data-server-name'].value){
+                    server.leg="querying...";
+                    drawTable();
+                    getServerDetails(server);
                     }
                 }
             }
 
             function getServerDetails(server){
-                console.log(server);
-                if(!server.name){
-                    server.name = server.target.attributes['data-server-name'].value;
-                    server.hostname = server.target.attributes['data-server-hostname'].value; 
-                    server.endpoint = server.target.attributes['data-server-endpoint'].value; 
-                    server.port = server.target.attributes['data-server-port'].value;
-                }
+
+                // if(!server.name){
+                //     server.name = server.target.attributes['data-server-name'].value;
+                //     server.hostname = server.target.attributes['data-server-hostname'].value; 
+                //     server.endpoint = server.target.attributes['data-server-endpoint'].value; 
+                //     server.port = server.target.attributes['data-server-port'].value;
+                // }
+
+                // server.leg = "querying...";
+                // drawTable();
+
                 let url = "http://" + server.hostname + ":" + server.port + server.endpoint;
                 getRequest(updateServerResults, url, server.name);
             }
@@ -155,7 +162,7 @@
                         }
                     }
                 }
-                drawTable(serverList);
+                drawTable();
             }
 
         </script>

@@ -20,7 +20,7 @@ app.on('ready', function(){
 
     // Create the browser window.
   win = new BrowserWindow({width: 800, height: 600})
-  readCsvData()
+
   // and load the index.html of the app.
   win.loadURL(url.format({
     //pathname: path.join(__dirname, 'public','index.html'),
@@ -42,9 +42,9 @@ app.on('ready', function(){
   
   contents = win.webContents;
 
-  
+  readCsvData()
+  //serverlist is not ready yet!!
 
-  //setup();
 });
 
 
@@ -84,88 +84,12 @@ function extractData(data) {
           serverList.push(myServer);
       }
   }
-  console.log(serverList);
 
-  //win.webContents.send('drawTable',serverList);
-  win.webContents.send('getAllServerDetails',serverList);
-
-  //requestServerDetails();
+  //serverList is populated at this point!!
+  win.webContents.send('updateServerList',serverList);
 }
 
-
-function requestServerDetails(){
-  for(let server of serverList){
-      if(!server.leg){
-          server.leg="querying...";
-          getServerDetails(server);
-      }
-  }
-}
-
-function getServerDetails(server){
-  if(!server.name){
-      server.name = server.target.attributes['data-server-name'].value;
-      server.endpoint = server.target.attributes['data-server-endpoint'].value; 
-      //server.port = server.target.attributes['data-server-port'].value;
-  }
-  //let url = "http://" + server.ip + ":" + server.port + '/legquery';
-  getRequest(updateServerResults, server.endpoint, server.name);
-}
-
-function updateServerResults(data, serverName){
-    
-  for(let server of serverList){
-      if(serverName == server.name) {
-          try{
-              server.leg = JSON.parse(data).legname;
-              if(!server.leg) {
-                  server.leg = data;
-              }
-          break;
-          } catch (e) {
-              server.leg = data;
-          }
-      }
-  }
-  drawTable();
-}
-
-
-function getRequest(callback, url, id){
-  var xhr = new http.XMLHttpRequest();
-  // xhr.onerror = function(e){
-  //   console.log(e);
-  //   callback("Unknown Error Occured. Server response not received.",id);
-  // };
-  xhr.open("GET", url, true);
-  xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-
-    xhr.send();
-    xhr.onreadystatechange = function() {
-      if(xhr.readyState == 4 && xhr.status == 200) {
-        callback(xhr.responseText,id);
-      }
-      if(xhr.readyState == 4 && xhr.status != 200) {
-        callback("connection error, status:" + xhr.status,id);
-      }
-    }  
-}
-
-ipcMain.on('refreshList', function(){
-  readCsvData();
-  //win.webContents.send('drawTable',serverList);
-});
-
-function setup(){
-  console.log(serverList);
-  // let button = document.getElementById("refreshButton");
-  // button.addEventListener("click", refresh);
-  // console.log(serverList);
-  // requestServerDetails();
-  // console.log(serverList);
-  // drawTable();
-}
-
+ipcMain.on('refreshList', readCsvData);
 
 class Server {
 
@@ -174,13 +98,8 @@ class Server {
     this.hostname = hostname;
     this.port = port;
     this.endpoint = endpoint;
-    this.response = null;
+    this.leg = null;
   }
-
-  addResponse(response){
-    this.response = response;
-  }
-
 }
   
 // This method will be called when Electron has finished
@@ -211,14 +130,7 @@ const template = [
   {
     label: 'Edit',
     submenu: [
-//      {        role: 'undo'      },
-//      {        role: 'redo'      },
-//      {        type: 'separator'      },
-//      {        role: 'cut'      },
       {        role: 'copy'      },
-//      {        role: 'paste'      },
-//      {        role: 'pasteandmatchstyle'      },
-//      {        role: 'delete'      },
       {        role: 'selectall'      }
     ]
   },
