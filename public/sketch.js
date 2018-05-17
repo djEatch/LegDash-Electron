@@ -8,11 +8,11 @@ function preload(){
 
 function setup() {
 // get server list
-
+    console.log(serverList);
     let button = document.getElementById("refreshButton");
     button.addEventListener("click", refresh);
 
-    createServerList();
+    //createServerList();
     //getServerList();
     console.log(serverList);
     requestServerDetails();

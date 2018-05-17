@@ -1,0 +1,7 @@
+name, hostname, port, path
+"FT5EAS","gbrpmseasf41.corp.internal","8180","/application-status-monitor/rest/applicationstatusmonitor/status.json"
+"bgrblahblah2","localhost","3002","/legquery"
+"bgrblahblah3","localhost","3003","/legquery"
+"bgrblahblahA","localhost","3001","/legquery"
+"bgrblahblahB","localhost","3002","/legquery"
+"bgrblahblahC","localhost","3003","/legquery"

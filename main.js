@@ -1,26 +1,33 @@
-const {app, BrowserWindow, Menu} = require('electron')
+const {app, BrowserWindow, Menu, ipcMain} = require('electron')
 const path = require('path')
 const url = require('url')
 
+const fs = require("fs");
+const http = require("http");
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let win
+let win;
+let contents;
 
-function createWindow () {
-  // Create the browser window.
+let serverList = [];
+let csvUrl = './servers.txt';  // URL to web API
+
+//app.on('ready', () => {readCsvData(), createWindow()})
+app.on('ready', function(){
+
+
+
+    // Create the browser window.
   win = new BrowserWindow({width: 800, height: 600})
 
   // and load the index.html of the app.
   win.loadURL(url.format({
-    pathname: path.join(__dirname, 'public','index.html'),
+    //pathname: path.join(__dirname, 'public','index.html'),
+    pathname: path.join(__dirname, 'electronIndex.html'),
     protocol: 'file:',
     slashes: true
   }))
-
-  // Open the DevTools.
-  //win.webContents.openDevTools()
-
 
   // Emitted when the window is closed.
   win.on('closed', () => {
@@ -29,12 +36,146 @@ function createWindow () {
     // when you should delete the corresponding element.
     win = null
   })
+
+  const winMenu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(winMenu);
+  readCsvData()
+  contents = win.webContents;
+
+  //setup();
+});
+
+
+
+function readCsvData() {
+  // Asynchronous read
+  fs.readFile(csvUrl, function (err, data) {
+    if (err) {
+      //return console.error(err);
+      handleError(err)
+    }
+    extractData(data.toString());
+  });
+}
+
+function extractData(data) {
+
+  let allTextLines = data.split(/\r\n|\n/);
+  let headers = allTextLines[0].split(',');
+  let lines = [];
+
+  for ( let i = 1; i < allTextLines.length; i++) {
+      // split content based on comma
+      let data = allTextLines[i].split(',');
+      if (data.length == headers.length) {
+          let myServer = new Server(data[0].replace(/['"]+/g, ''),data[1].replace(/['"]+/g, ''),data[2].replace(/['"]+/g, ''),data[3].replace(/['"]+/g, ''));
+          serverList.push(myServer);
+      }
+  }
+  console.log(serverList);
+
+  //requestServerDetails();
+}
+
+
+function requestServerDetails(){
+  for(let server of serverList){
+      if(!server.leg){
+          server.leg="querying...";
+          getServerDetails(server);
+      }
+  }
+}
+
+function getServerDetails(server){
+  if(!server.name){
+      server.name = server.target.attributes['data-server-name'].value;
+      server.endpoint = server.target.attributes['data-server-endpoint'].value; 
+      //server.port = server.target.attributes['data-server-port'].value;
+  }
+  //let url = "http://" + server.ip + ":" + server.port + '/legquery';
+  getRequest(updateServerResults, server.endpoint, server.name);
+}
+
+function updateServerResults(data, serverName){
+    
+  for(let server of serverList){
+      if(serverName == server.name) {
+          try{
+              server.leg = JSON.parse(data).legname;
+              if(!server.leg) {
+                  server.leg = data;
+              }
+          break;
+          } catch (e) {
+              server.leg = data;
+          }
+      }
+  }
+  drawTable();
+}
+
+function getRequest(callback, url, id){
+  var xhr = new http.XMLHttpRequest();
+  // xhr.onerror = function(e){
+  //   console.log(e);
+  //   callback("Unknown Error Occured. Server response not received.",id);
+  // };
+  xhr.open("GET", url, true);
+  xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+
+    xhr.send();
+    xhr.onreadystatechange = function() {
+      if(xhr.readyState == 4 && xhr.status == 200) {
+        callback(xhr.responseText,id);
+      }
+      if(xhr.readyState == 4 && xhr.status != 200) {
+        callback("connection error, status:" + xhr.status,id);
+      }
+    }  
+}
+
+function handleError (error) {
+  // In a real world app, we might use a remote logging infrastructure
+  // We'd also dig deeper into the error to get a better message
+  let errMsg = (error.message) ? error.message :
+    error.status ? `${error.status} - ${error.statusText}` : 'Server error';
+  console.error("ERR: " + errMsg); // log to console instead
+  return errMsg;
+}
+
+function setup(){
+  console.log(serverList);
+  // let button = document.getElementById("refreshButton");
+  // button.addEventListener("click", refresh);
+  // console.log(serverList);
+  // requestServerDetails();
+  // console.log(serverList);
+  // drawTable();
+}
+
+
+class Server {
+
+  constructor(name, hostname, port, endpoint) {
+    this.name = name;
+    this.hostname = hostname;
+    this.port = port;
+    this.endpoint = endpoint;
+    this.response = null;
+  }
+
+  addResponse(response){
+    this.response = response;
+  }
+
 }
   
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
+
+//app.on('ready', createWindow)
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
@@ -168,5 +309,3 @@ if (process.platform === 'darwin') {
   ]
 }
 
-const menu = Menu.buildFromTemplate(template)
-Menu.setApplicationMenu(menu)

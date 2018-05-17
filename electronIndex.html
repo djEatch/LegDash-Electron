@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- <script language="javascript" type="text/javascript" src="libraries/p5.js"></script>
+    <script language="javascript" src="libraries/p5.dom.js"></script>
+    <script language="javascript" type="text/javascript" src="sketch.js"></script> -->
+        
+    <!-- Bootstrap CSS -->
+    <!-- <link rel="stylesheet" href="libraries/bootstrap.min.css"> -->
+    <link rel="stylesheet" href="public/libraries/bootstrap.min.css">
+    
+    <!-- this line removes any default padding and style. you might only need one of these values set. -->
+    <!-- <style> body {padding: 0; margin: 0;} </style> -->
+    
+    </head>
+
+    <body>
+        <div class="container-fluid">
+        <div class="row">
+            <div class="table-responsive">
+            <table id="serverTable" class="table table-light table-hover">
+                <thead class="thead-dark"><td>Server</td><td>Endpoint</td><td>Leg</td><td>Retry</td></thead>
+                <tbody></tbody>
+            </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <button id="refreshButton" class="btn btn-primary btn-block">refresh all</button>
+            </div>
+        </div>
+        <div class="row">
+            <div id="canvasDiv">
+            
+            </div>
+        </div>
+        </div>
+    </body>
+  </html>
