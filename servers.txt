@@ -1,0 +1,13 @@
+name, hostname, port, path
+"FT5EAS","gbrpmseasf41.corp.internal","8180","/application-status-monitor/rest/applicationstatusmonitor/status.json"
+"bgrblahblah2","localhost","3002","/legquery"
+"bgrblahblah3","localhost","3003","/legquery"
+"bgrblahblahA","localhost","3001","/legquery"
+"bgrblahblahB","localhost","3002","/legquery"
+"bgrblahblahC","localhost","3003","/legquery"
+"FT1 Y leg UIS LB","10.141.129.247","8858","/application-status-monitor/rest/applicationstatusmonitor/status.json"
+"FT1 Y leg EAS LB","10.141.129.248","8858","/application-status-monitor/rest/applicationstatusmonitor/status.json"
+"FT1 UIS 01","gbrpmsuisf01.corp.internal","8180","/application-status-monitor/rest/applicationstatusmonitor/status.json"
+"FT1 UIS 02","gbrpmsuisf02.corp.internal","8180","/application-status-monitor/rest/applicationstatusmonitor/status.json"
+"FT1 EAS 01","gbrpmseasf01.corp.internal","8180","/application-status-monitor/rest/applicationstatusmonitor/status.json"
+"FT1 EAS 02","gbrpmseasf02.corp.internal","8180","/application-status-monitor/rest/applicationstatusmonitor/status.json"

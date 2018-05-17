@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+    
+    <!-- this line removes any default padding and style. you might only need one of these values set. -->
+    <style> body {padding: 0; margin: 0;} </style>
+    
+    </head>
+
+    <body>
+        <div class="container-fluid">
+        <div class="row">
+            <div class="table-responsive">
+            <table id="serverTable" class="table table-light table-hover">
+                <thead class="thead-dark"><td>Name</td><td>Hostname</td><td>Endpoint</td><td>Leg</td><td>Retry</td></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <button id="refreshButton" class="btn btn-primary btn-block">refresh all</button>
+            </div>
+        </div>
+        <div class="row">
+            <div id="canvasDiv">
+            
+            </div>
+        </div>
+        </div>
+
+        <script>
+            const electron = require('electron');
+            const {ipcRenderer} = electron;
+            
+            let serverList;
+
+            const serverTable = document.querySelector('#tableBody');
+            const refreshButton = document.querySelector('#refreshButton');
+            refreshButton.addEventListener("click", refresh);
+
+            function refresh(e){
+                ipcRenderer.send('refreshList');
+            }
+
+            function drawTable(){
+                serverTable.innerHTML = "";
+                let i = 0
+                for(let server of serverList){
+                    let row = serverTable.insertRow(i);
+                    let cell1 = row.insertCell(0);
+                    let cell2 = row.insertCell(1);
+                    let cell3 = row.insertCell(2);
+                    let cell4 = row.insertCell(3);
+                    let cellbtn = row.insertCell(4);
+                    cell1.innerHTML = server.name;
+                    cell2.innerHTML = server.hostname;
+                    cell3.innerHTML = server.endpoint;
+                    cell4.innerHTML = server.leg;
+
+                    let refButton = document.createElement("button");
+                    refButton.textContent = "refresh";
+                    refButton.type = "button";
+                    refButton.classList = "btn btn-outline-warning";
+                    refButton.setAttribute('data-server-name',server.name);
+                    refButton.setAttribute('data-server-hostname',server.hostname);
+                    refButton.setAttribute('data-server-endpoint',server.endpoint);
+                    refButton.setAttribute('data-server-port',server.port);
+                    //refButton.onclick = getServerDetails;
+                    refButton.onclick = individualRefresh;
+                    
+
+                    if(server.leg != "XLeg") {
+                        row.className = "table-success"
+                    }
+                    if(server.leg == "connection error, status:0") {
+                        row.classList = "table-danger";
+                        refButton.classList = "btn btn-danger";                        
+                    }
+                    cellbtn.appendChild(refButton);
+                    i++;
+                }
+            }
+
+
+            ipcRenderer.on('updateServerList',function(e,serverData){
+                serverList = serverData;
+                drawTable();
+                requestAllServerDetails();
+            })
+            ipcRenderer.on('drawTable',drawTable)
+            ipcRenderer.on('getAllServerDetails',requestAllServerDetails)
+
+            function requestAllServerDetails(){
+                for(let server of serverList){
+                        server.leg="querying...";
+                        getServerDetails(server);
+                }
+            }
+
+            function individualRefresh(e){
+                for(let server of serverList){
+                    if(server.name == e.target.attributes['data-server-name'].value){
+                    server.leg="querying...";
+                    drawTable();
+                    getServerDetails(server);
+                    }
+                }
+            }
+
+            function getServerDetails(server){
+
+                // if(!server.name){
+                //     server.name = server.target.attributes['data-server-name'].value;
+                //     server.hostname = server.target.attributes['data-server-hostname'].value; 
+                //     server.endpoint = server.target.attributes['data-server-endpoint'].value; 
+                //     server.port = server.target.attributes['data-server-port'].value;
+                // }
+
+                // server.leg = "querying...";
+                // drawTable();
+
+                let url = "http://" + server.hostname + ":" + server.port + server.endpoint;
+                getRequest(updateServerResults, url, server.name);
+            }
+
+            function getRequest(callback, url, id){
+                var xhr = new XMLHttpRequest();
+                // xhr.onerror = function(e){
+                //   console.log(e);
+                //   callback("Unknown Error Occured. Server response not received.",id);
+                // };
+                xhr.open("GET", url, true);
+                xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+
+                xhr.send();
+                xhr.onreadystatechange = function() {
+                    if(xhr.readyState == 4 && xhr.status == 200) {
+                    callback(xhr.responseText,id);
+                    }
+                    if(xhr.readyState == 4 && xhr.status != 200) {
+                    callback("connection error, status:" + xhr.status,id);
+                    }
+                }  
+            }
+
+            function updateServerResults(data, serverName){
+                for(server of serverList){
+                    if(serverName == server.name) {
+                        try{
+                            server.leg = JSON.parse(data).legname;
+                            if(!server.leg) {
+                                server.leg = data;
+                            }
+                        break;
+                        } catch (e) {
+                            server.leg = data;
+                        }
+                    }
+                }
+                drawTable();
+            }
+
+        </script>
+    </body>
+  </html>

@@ -1,26 +1,33 @@
-const {app, BrowserWindow, Menu} = require('electron')
+const {app, BrowserWindow, Menu, ipcMain} = require('electron')
 const path = require('path')
 const url = require('url')
 
+const fs = require("fs");
+const http = require("http");
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let win
+let win;
+let contents;
 
-function createWindow () {
-  // Create the browser window.
+let serverList = [];
+let csvUrl = './servers.txt';  // URL to web API
+
+//app.on('ready', () => {readCsvData(), createWindow()})
+app.on('ready', function(){
+
+ 
+
+    // Create the browser window.
   win = new BrowserWindow({width: 800, height: 600})
 
   // and load the index.html of the app.
   win.loadURL(url.format({
-    pathname: path.join(__dirname, 'public','index.html'),
+    //pathname: path.join(__dirname, 'public','index.html'),
+    pathname: path.join(__dirname, 'electronIndex.html'),
     protocol: 'file:',
     slashes: true
   }))
-
-  // Open the DevTools.
-  //win.webContents.openDevTools()
-
 
   // Emitted when the window is closed.
   win.on('closed', () => {
@@ -29,12 +36,77 @@ function createWindow () {
     // when you should delete the corresponding element.
     win = null
   })
+
+  const winMenu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(winMenu);
+  
+  contents = win.webContents;
+
+  readCsvData()
+  //serverlist is not ready yet!!
+
+});
+
+
+
+function readCsvData() {
+  // Asynchronous read
+  serverList = [];
+  fs.readFile(csvUrl, function (err, data) {
+    if (err) {
+      //return console.error(err);
+      handleError(err)
+    }
+    extractData(data.toString());
+  });
+}
+
+function handleError (error) {
+  // In a real world app, we might use a remote logging infrastructure
+  // We'd also dig deeper into the error to get a better message
+  let errMsg = (error.message) ? error.message :
+    error.status ? `${error.status} - ${error.statusText}` : 'Server error';
+  console.error("ERR: " + errMsg); // log to console instead
+  return errMsg;
+}
+
+function extractData(data) {
+
+  let allTextLines = data.split(/\r\n|\n/);
+  let headers = allTextLines[0].split(',');
+  let lines = [];
+
+  for ( let i = 1; i < allTextLines.length; i++) {
+      // split content based on comma
+      let data = allTextLines[i].split(',');
+      if (data.length == headers.length) {
+          let myServer = new Server(data[0].replace(/['"]+/g, ''),data[1].replace(/['"]+/g, ''),data[2].replace(/['"]+/g, ''),data[3].replace(/['"]+/g, ''));
+          serverList.push(myServer);
+      }
+  }
+
+  //serverList is populated at this point!!
+  win.webContents.send('updateServerList',serverList);
+}
+
+ipcMain.on('refreshList', readCsvData);
+
+class Server {
+
+  constructor(name, hostname, port, endpoint) {
+    this.name = name;
+    this.hostname = hostname;
+    this.port = port;
+    this.endpoint = endpoint;
+    this.leg = null;
+  }
 }
   
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
+
+//app.on('ready', createWindow)
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
@@ -58,14 +130,7 @@ const template = [
   {
     label: 'Edit',
     submenu: [
-//      {        role: 'undo'      },
-//      {        role: 'redo'      },
-//      {        type: 'separator'      },
-//      {        role: 'cut'      },
       {        role: 'copy'      },
-//      {        role: 'paste'      },
-//      {        role: 'pasteandmatchstyle'      },
-//      {        role: 'delete'      },
       {        role: 'selectall'      }
     ]
   },
@@ -168,5 +233,3 @@ if (process.platform === 'darwin') {
   ]
 }
 
-const menu = Menu.buildFromTemplate(template)
-Menu.setApplicationMenu(menu)
