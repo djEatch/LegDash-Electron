@@ -104,6 +104,9 @@ function updateServerResults(data, serverName){
         if(serverName == server.name) {
             try{
                 server.leg = JSON.parse(data).legname;
+                if(!server.leg) {
+                    server.leg = data;
+                }
             break;
             } catch (e) {
                 server.leg = data;
