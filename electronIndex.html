@@ -77,18 +77,14 @@
                     }
                     cell5.innerHTML = server.availability;
                     cell6.innerHTML = server.status;
-                    console.log (server);
                     let refButton = document.createElement("button");
                     refButton.textContent = "refresh";
                     refButton.type = "button";
-                    //refButton.classList = "btn btn-outline-warning";
                     refButton.setAttribute('data-server-name',server.name);
                     refButton.setAttribute('data-server-hostname',server.hostname);
                     refButton.setAttribute('data-server-endpoint',server.endpoint);
                     refButton.setAttribute('data-server-port',server.port);
-                    //refButton.onclick = getServerDetails;
                     refButton.onclick = individualRefresh;
-                    
 
                     if(server.leg == "querying...") {
                         row.className = "table-warning"
