@@ -47,6 +47,8 @@
             
             let serverList;
 
+            let sortOptions = {"currentField":null,"currentDir":-1}
+
             const serverTable = document.querySelector('#tableBody');
             const refreshButton = document.querySelector('#refreshButton');
             refreshButton.addEventListener("click", refresh);
@@ -56,19 +58,27 @@
             }
 
             function sortData(field, field2){
+
+                if(sortOptions.currentField == field){
+                    sortOptions.currentDir*=-1;
+                } else {
+                    sortOptions.currentField = field;
+                    sortOptions.currentDir = 1
+                }
+
                 serverList.sort(function(a,b){
                     
                     var x = a[field] == null || (!a[field]) ? "zzz" : a[field].toLowerCase();
                     var y = b[field] == null || (!b[field]) ? "zzz" : b[field].toLowerCase();
 
-                    if(x<y){return -1;}
-                    if(x>y){return 1;}
+                    if(x<y){return -1 *  sortOptions.currentDir;}
+                    if(x>y){return 1 * sortOptions.currentDir;}
 
                     if(x==y && field2){
                         var x2 = a[field2] == null || (!a[field2]) ? "zzz" : a[field2].toLowerCase();
                         var y2 = b[field2] == null || (!b[field2]) ? "zzz" : b[field2].toLowerCase();
-                        if(x2<y2){return -1;}
-                        if(x2>y2){return 1;}
+                        if(x2<y2){return -1 * sortOptions.currentDir;}
+                        if(x2>y2){return 1 * sortOptions.currentDir;}
                     }
                     return 0;
                 });
