@@ -17,12 +17,12 @@
             <div class="table-responsive">
             <table id="serverTable" class="table table-light table-hover">
                 <thead class="thead-dark">
-                    <td onclick="sortData('name')">Name</td>
-                    <td onclick="sortData('hostname')">Hostname</td>
+                    <td onclick="sortData('name','hostname')">Name</td>
+                    <td onclick="sortData('hostname','name')">Hostname</td>
                     <!-- <td>Endpoint</td> -->
-                    <td onclick="sortData('leg')">Leg</td>
-                    <td onclick="sortData('status')">Status</td>
-                    <td onclick="sortData('availability')">Availability</td>
+                    <td onclick="sortData('leg','name')">Leg</td>
+                    <td onclick="sortData('status','name')">Status</td>
+                    <td onclick="sortData('availability','name')">Availability</td>
                     <td>Retry</td>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -55,7 +55,7 @@
                 ipcRenderer.send('refreshList');
             }
 
-            function sortData(field){
+            function sortData(field, field2){
                 console.log(serverList);
                 serverList.sort(function(a,b){
                     
@@ -67,6 +67,13 @@
                     console.log (x,y);
                     if(x<y){return -1;}
                     if(x>y){return 1;}
+
+                    if(x==y && field2){
+                        var x2 = a[field2] == null || (!a[field2]) ? "zzz" : a[field2].toLowerCase();
+                        var y2 = b[field2] == null || (!b[field2]) ? "zzz" : b[field2].toLowerCase();
+                        if(x2<y2){return -1;}
+                        if(x2>y2){return 1;}
+                    }
                     return 0;
                 });
                 console.log(serverList);
