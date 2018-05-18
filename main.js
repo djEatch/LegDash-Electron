@@ -16,10 +16,8 @@ let csvUrl = __dirname + '/servers.txt';  // URL to web API
 //app.on('ready', () => {readCsvData(), createWindow()})
 app.on('ready', function(){
 
- 
-
     // Create the browser window.
-  win = new BrowserWindow({width: 800, height: 600})
+  win = new BrowserWindow({show: false, width: 800, height: 600})
 
   // and load the index.html of the app.
   win.loadURL(url.format({
@@ -37,40 +35,23 @@ app.on('ready', function(){
     win = null
   })
 
+  win.once('ready-to-show', () => {
+    loadData();
+    win.show()
+  })
+
+
   const winMenu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(winMenu);
   
   contents = win.webContents;
 
-  readCsvData()
-  //serverlist is not ready yet!!
-
 });
 
 
-
-function readCsvData() {
-  // Asynchronous read
+function loadData(){
   serverList = [];
-  fs.readFile(csvUrl, function (err, data) {
-    if (err) {
-      //return console.error(err);
-      handleError(err)
-    }
-    extractData(data.toString());
-  });
-}
-
-function handleError (error) {
-  // In a real world app, we might use a remote logging infrastructure
-  // We'd also dig deeper into the error to get a better message
-  let errMsg = (error.message) ? error.message :
-    error.status ? `${error.status} - ${error.statusText}` : 'Server error';
-  console.error("ERR: " + errMsg); // log to console instead
-  return errMsg;
-}
-
-function extractData(data) {
+  var data = fs.readFileSync(csvUrl).toString();
 
   let allTextLines = data.split(/\r\n|\n/);
   let headers = allTextLines[0].split(',');
@@ -85,11 +66,10 @@ function extractData(data) {
       }
   }
 
-  //serverList is populated at this point!!
   win.webContents.send('updateServerList',serverList);
 }
 
-ipcMain.on('refreshList', readCsvData);
+ipcMain.on('refreshList', loadData);
 
 class Server {
 
