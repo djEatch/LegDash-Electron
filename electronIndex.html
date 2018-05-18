@@ -4,7 +4,7 @@
     <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <link rel="stylesheet" href="bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"> -->
     
     <!-- this line removes any default padding and style. you might only need one of these values set. -->
     <style> body {padding: 0; margin: 0;} </style>
@@ -65,7 +65,7 @@
                     let refButton = document.createElement("button");
                     refButton.textContent = "refresh";
                     refButton.type = "button";
-                    refButton.classList = "btn btn-outline-warning";
+                    //refButton.classList = "btn btn-outline-warning";
                     refButton.setAttribute('data-server-name',server.name);
                     refButton.setAttribute('data-server-hostname',server.hostname);
                     refButton.setAttribute('data-server-endpoint',server.endpoint);
@@ -74,12 +74,18 @@
                     refButton.onclick = individualRefresh;
                     
 
-                    if(server.leg != "XLeg") {
-                        row.className = "table-success"
-                    }
-                    if(server.leg == "connection error, status:0") {
+                    if(server.leg == "querying...") {
+                        row.className = "table-warning"
+                        refButton.classList = "btn btn-outline-warning";
+                        refButton.textContent = "retry";
+                    } else if(server.leg == "connection error, status:0") {
                         row.classList = "table-danger";
-                        refButton.classList = "btn btn-danger";                        
+                        refButton.classList = "btn btn-danger";
+                        refButton.textContent = "retry";                        
+                    } else {
+                        row.classList = "table-success";
+                        refButton.classList = "btn btn-success";
+                        refButton.textContent = "refresh";
                     }
                     cellbtn.appendChild(refButton);
                     i++;
