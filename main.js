@@ -42,12 +42,12 @@ app.on('ready', function(){
   
   contents = win.webContents;
 
-  readCsvData()
+  //readCsvData()
   //serverlist is not ready yet!!
-
+  getRequestTest();
 });
 
-
+ipcMain.on('refreshList', readCsvData);
 
 function readCsvData() {
   // Asynchronous read
@@ -89,7 +89,28 @@ function extractData(data) {
   win.webContents.send('updateServerList',serverList);
 }
 
-ipcMain.on('refreshList', readCsvData);
+function getRequestTest(){
+  let res;
+  let bill = http.request({
+    method: 'GET',
+    protocol: 'http:',
+    hostname: 'gbrpmseasf41.corp.internal',
+    port: 8180,
+    path: '/application-status-monitor/rest/applicationstatusmonitor/status.json'
+  },res);
+  bill.end;
+  console.log(bill);
+
+  let ben = http.request({
+    method: 'GET',
+    protocol: 'http:',
+    hostname: 'localhost',
+    port: 3001,
+    path: '/legquery'
+  },res);
+  ben.end;
+  console.log(ben);
+}
 
 class Server {
 
