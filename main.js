@@ -42,7 +42,7 @@ app.on('ready', function(){
   
   contents = win.webContents;
 
-  //readCsvData()
+  readCsvData()
   //serverlist is not ready yet!!
   getRequestTest();
 });
