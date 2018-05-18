@@ -56,15 +56,11 @@
             }
 
             function sortData(field, field2){
-                console.log(serverList);
                 serverList.sort(function(a,b){
                     
                     var x = a[field] == null || (!a[field]) ? "zzz" : a[field].toLowerCase();
                     var y = b[field] == null || (!b[field]) ? "zzz" : b[field].toLowerCase();
 
-                    //var x = a[field];//.toLowerCase();
-                    //var y = b[field];//.toLowerCase();
-                    console.log (x,y);
                     if(x<y){return -1;}
                     if(x>y){return 1;}
 
@@ -76,7 +72,6 @@
                     }
                     return 0;
                 });
-                console.log(serverList);
                 drawTable();
             }
 
