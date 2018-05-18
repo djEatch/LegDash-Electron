@@ -78,7 +78,10 @@ class Server {
     this.hostname = hostname;
     this.port = port;
     this.endpoint = endpoint;
+    this.response = null;
     this.leg = null;
+    this.availability = null;
+    this.status = null;
   }
 }
   
