@@ -11,7 +11,7 @@ let win;
 let contents;
 
 let serverList = [];
-let csvUrl = './servers.txt';  // URL to web API
+let csvUrl = __dirname + '/servers.txt';  // URL to web API
 
 //app.on('ready', () => {readCsvData(), createWindow()})
 app.on('ready', function(){
