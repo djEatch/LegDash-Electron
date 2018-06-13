@@ -12,6 +12,9 @@ let contents;
 
 let serverList = [];
 let csvUrl = __dirname + '/servers.txt';  // URL to web API
+let envFile = __dirname + '/EnvList.txt';
+let envList = [];
+//let subLBList = [];
 
 //app.on('ready', () => {readCsvData(), createWindow()})
 app.on('ready', function(){
@@ -36,7 +39,8 @@ app.on('ready', function(){
   })
 
   win.once('ready-to-show', () => {
-    loadData();
+    getEnvList();
+    //loadData();
     win.show()
   })
 
@@ -48,6 +52,25 @@ app.on('ready', function(){
 
 });
 
+function getEnvList(){
+  envList = [];
+  var data = fs.readFileSync(envFile).toString();
+
+  let allTextLines = data.split(/\r\n|\n/);
+  let headers = allTextLines[0].split(',');
+  //let lines = [];
+
+  for ( let i = 1; i < allTextLines.length; i++) {
+      // split content based on comma
+      let data = allTextLines[i].split(',');
+      if (data.length == headers.length) {
+          let myEnv = new Env(data[0].replace(/['"]+/g, ''),data[1].replace(/['"]+/g, ''),data[2].replace(/['"]+/g, ''),data[3].replace(/['"]+/g, ''),data[4].replace(/['"]+/g, ''));
+          envList.push(myEnv);
+      }
+  }
+  win.webContents.send('updateEnvList',envList);
+
+}
 
 function loadData(){
   serverList = [];
@@ -55,7 +78,7 @@ function loadData(){
 
   let allTextLines = data.split(/\r\n|\n/);
   let headers = allTextLines[0].split(',');
-  let lines = [];
+  //let lines = [];
 
   for ( let i = 1; i < allTextLines.length; i++) {
       // split content based on comma
@@ -70,6 +93,16 @@ function loadData(){
 }
 
 ipcMain.on('refreshList', loadData);
+
+class Env{
+  constructor(envname, hostname, endpoint, username, password){
+    this.envname = envname;
+    this.hostname = hostname;
+    this.endpoint = endpoint;
+    this.username = username;
+    this.password = password;
+  }
+}
 
 class Server {
 

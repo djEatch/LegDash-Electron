@@ -35,8 +35,8 @@
             </div>
         </div>
         <div class="row">
-            <div id="canvasDiv">
-            
+            <div class="col-md-12">
+                <button id="envPickedButton" class="btn btn-primary btn-block">FUDGE FT1</button>
             </div>
         </div>
         </div>
@@ -46,12 +46,17 @@
             const {ipcRenderer} = electron;
             
             let serverList;
+            let envList;
+            let subLBList = [];
 
             let sortOptions = {"currentField":null,"currentDir":-1}
 
             const serverTable = document.querySelector('#tableBody');
             const refreshButton = document.querySelector('#refreshButton');
             refreshButton.addEventListener("click", refresh);
+
+            const fudgeButton = document.querySelector('#envPickedButton');
+            fudgeButton.addEventListener("click", fudgeFT1);
 
             function refresh(e){
                 ipcRenderer.send('refreshList');
@@ -142,6 +147,48 @@
             })
             ipcRenderer.on('drawTable',drawTable)
             ipcRenderer.on('getAllServerDetails',requestAllServerDetails)
+            ipcRenderer.on('updateEnvList',function(e,envData){
+                envList = envData;
+                console.log(envList);
+            })
+
+            function fudgeFT1(){
+                pickedEnv('FT1');
+            }
+
+            function pickedEnv(_envName){
+                let envDetails;
+                envDetails = getMasterLBAddressForEnv(_envName);
+                console.log(envDetails);
+                let masterLBAddress = 'http://' + envDetails.hostname + envDetails.endpoint;
+                console.log(masterLBAddress);
+                getRequest(gotSubLBList,masterLBAddress,_envName, envDetails.username, envDetails.password);
+            }
+
+            function getMasterLBAddressForEnv(_envName){
+                //let address;
+                for(env of envList){
+                    if(env.envName = _envName){
+                        return env;
+                    //address = 'https://' + env.hostname + env.endpoint
+                        break;
+                    }
+                }
+                return null;
+            }
+
+            function gotSubLBList(data,_envName){
+                let masterLBResponse = JSON.parse(data)
+                subLBList = masterLBResponse.lbvserver;
+                console.log(subLBList);
+                // for(subLB of masterLBResponse.lbvserver){
+                //     console.log (subLB.name);
+                //     subLBList.push({name:subLB.name, status:subLB.status, ip:subLB.primaryipaddress, port:subLB.primaryport})
+                // }
+                // console.log(subLBList);
+                //subLBList = JSON.parse(data);
+                
+            }
 
             function requestAllServerDetails(){
                 for(let server of serverList){
@@ -176,7 +223,8 @@
                 getRequest(updateServerResults, url, server.name);
             }
 
-            function getRequest(callback, url, id){
+            function getRequest(callback, url, id, username, password){
+                console.log(url,id);
                 var xhr = new XMLHttpRequest();
                 // xhr.onerror = function(e){
                 //   console.log(e);
@@ -184,6 +232,9 @@
                 // };
                 xhr.open("GET", url, true);
                 xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+                if(username){
+                    xhr.setRequestHeader("Authorization", "Basic " + btoa(username + ":" + password))
+                }
 
                 xhr.send();
                 xhr.onreadystatechange = function() {
