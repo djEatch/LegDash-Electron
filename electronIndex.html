@@ -162,7 +162,7 @@
                 console.log(envDetails);
                 let masterLBAddress = 'http://' + envDetails.hostname + envDetails.endpoint;
                 console.log(masterLBAddress);
-                getRequest(gotSubLBList,masterLBAddress,_envName, envDetails.username, envDetails.password);
+                getRequest(gotSubLBList,masterLBAddress,envDetails, envDetails.username, envDetails.password);
             }
 
             function getMasterLBAddressForEnv(_envName){
@@ -177,18 +177,67 @@
                 return null;
             }
 
-            function gotSubLBList(data,_envName){
-                let masterLBResponse = JSON.parse(data)
-                subLBList = masterLBResponse.lbvserver;
-                console.log(subLBList);
-                // for(subLB of masterLBResponse.lbvserver){
-                //     console.log (subLB.name);
-                //     subLBList.push({name:subLB.name, status:subLB.status, ip:subLB.primaryipaddress, port:subLB.primaryport})
-                // }
-                // console.log(subLBList);
-                //subLBList = JSON.parse(data);
-                
+            function gotSubLBList(data,_envDetails){
+                subLBList = [];
+                try{
+                    let masterLBResponse = JSON.parse(data)
+                    subLBList = masterLBResponse.lbvserver;
+                    for(subLB of subLBList){
+                        console.log(subLB.name);
+                        subtext = subLB.name.split('-');
+                        subLB.splitEnvName = subtext[0];
+                        subLB.splitServerType = subtext[1];
+                        subLB.splitLeg = subtext[2];
+                    }
+                    console.log(subLBList);
+                } 
+                catch(err) {
+                    console.log('BAD Response from Master LB');
+                    console.log(err);
+                }
+
+                getServerListFromSubLBList(subLBList,_envDetails);
             }
+
+            function getServerListFromSubLBList(_subLBList, _envDetails){
+
+                for(subLB of subLBList){
+                    let subLBAddress = 'http://' + _envDetails.hostname + _envDetails.endpoint + "/" + subLB.name + "?statbindings=yes";
+                    //http://10.141.129.210/nitro/v1/stat/lbvserver/FT1-UIS-X?statbindings=yes
+                    getRequest(gotSubServerList,subLBAddress,subLB,_envDetails.username, _envDetails.password);
+                }
+
+            }
+
+            function gotSubServerList(data,_subLB){
+                console.log(JSON.parse(data));
+
+                    //and this gives you the servers associated with this LB
+
+                    // lbvserver[0].servicegroupmember[n].primaryipaddress
+                    // lbvserver[0].servicegroupmember[n].primaryport
+                    // lbvserver[0].servicegroupmember[n].state
+                    let subLBServerList = [];
+                try{
+                    let subLBResponse = JSON.parse(data)
+                    subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
+                    for(subLBServer of subLBServerList){
+                        console.log(subLBServer);
+                        // subtext = subLB.name.split('-');
+                        // subLB.splitEnvName = subtext[0];
+                        // subLB.splitServerType = subtext[1];
+                        // subLB.splitLeg = subtext[2];
+                    }
+                    console.log(subLBServerList);
+                } 
+                catch(err) {
+                    console.log('BAD Response from Sub LB');
+                    console.log(_subLB);
+                    console.log(err);
+                }
+
+            }
+
 
             function requestAllServerDetails(){
                 for(let server of serverList){
