@@ -46,8 +46,9 @@
             const {ipcRenderer} = electron;
             
             let serverList;
-            let envList;
+            let envTypeList;
             let subLBList = [];
+            let lbServerList = [];
 
             let sortOptions = {"currentField":null,"currentDir":-1}
 
@@ -147,28 +148,28 @@
             })
             ipcRenderer.on('drawTable',drawTable)
             ipcRenderer.on('getAllServerDetails',requestAllServerDetails)
-            ipcRenderer.on('updateEnvList',function(e,envData){
-                envList = envData;
-                console.log(envList);
+            ipcRenderer.on('updateEnvTypeList',function(e,envTypeData){
+                envTypeList = envTypeData;
+                console.log(envTypeList);
             })
 
             function fudgeFT1(){
-                pickedEnv('FT1');
+                pickedEnvType('FT');
             }
 
-            function pickedEnv(_envName){
+            function pickedEnvType(_envType){
                 let envDetails;
-                envDetails = getMasterLBAddressForEnv(_envName);
+                envDetails = getMasterLBAddressForEnvType(_envType, envTypeList);
                 console.log(envDetails);
                 let masterLBAddress = 'http://' + envDetails.hostname + envDetails.endpoint;
                 console.log(masterLBAddress);
                 getRequest(gotSubLBList,masterLBAddress,envDetails, envDetails.username, envDetails.password);
             }
 
-            function getMasterLBAddressForEnv(_envName){
+            function getMasterLBAddressForEnvType(_envType, _envTypeList){
                 //let address;
-                for(env of envList){
-                    if(env.envName = _envName){
+                for(env of _envTypeList){
+                    if(env.envName = _envType){
                         return env;
                     //address = 'https://' + env.hostname + env.endpoint
                         break;
@@ -207,28 +208,30 @@
                     getRequest(gotSubServerList,subLBAddress,subLB,_envDetails.username, _envDetails.password);
                 }
 
+                console.log(lbServerList);
+
             }
 
             function gotSubServerList(data,_subLB){
-                console.log(JSON.parse(data));
+                // console.log(JSON.parse(data));
 
                     //and this gives you the servers associated with this LB
 
                     // lbvserver[0].servicegroupmember[n].primaryipaddress
                     // lbvserver[0].servicegroupmember[n].primaryport
                     // lbvserver[0].servicegroupmember[n].state
-                    let subLBServerList = [];
                 try{
                     let subLBResponse = JSON.parse(data)
-                    subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
+                    let subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
                     for(subLBServer of subLBServerList){
-                        console.log(subLBServer);
+                        //console.log(subLBServer);
+                        lbServerList.push(subLBServer);
                         // subtext = subLB.name.split('-');
                         // subLB.splitEnvName = subtext[0];
                         // subLB.splitServerType = subtext[1];
                         // subLB.splitLeg = subtext[2];
                     }
-                    console.log(subLBServerList);
+                    // console.log(subLBServerList);
                 } 
                 catch(err) {
                     console.log('BAD Response from Sub LB');

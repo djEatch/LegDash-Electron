@@ -12,8 +12,8 @@ let contents;
 
 let serverList = [];
 let csvUrl = __dirname + '/servers.txt';  // URL to web API
-let envFile = __dirname + '/EnvList.txt';
-let envList = [];
+let envFile = __dirname + '/EnvTypeList.txt';
+let envTypeList = [];
 //let subLBList = [];
 
 //app.on('ready', () => {readCsvData(), createWindow()})
@@ -39,7 +39,7 @@ app.on('ready', function(){
   })
 
   win.once('ready-to-show', () => {
-    getEnvList();
+    getEnvTypeList();
     //loadData();
     win.show()
   })
@@ -52,8 +52,8 @@ app.on('ready', function(){
 
 });
 
-function getEnvList(){
-  envList = [];
+function getEnvTypeList(){
+  envTypeList = [];
   var data = fs.readFileSync(envFile).toString();
 
   let allTextLines = data.split(/\r\n|\n/);
@@ -65,10 +65,10 @@ function getEnvList(){
       let data = allTextLines[i].split(',');
       if (data.length == headers.length) {
           let myEnv = new Env(data[0].replace(/['"]+/g, ''),data[1].replace(/['"]+/g, ''),data[2].replace(/['"]+/g, ''),data[3].replace(/['"]+/g, ''),data[4].replace(/['"]+/g, ''));
-          envList.push(myEnv);
+          envTypeList.push(myEnv);
       }
   }
-  win.webContents.send('updateEnvList',envList);
+  win.webContents.send('updateEnvTypeList',envTypeList);
 
 }
 

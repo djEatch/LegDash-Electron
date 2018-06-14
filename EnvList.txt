@@ -1,2 +1,0 @@
-Environment, LBAddress, endpoint, username, password
-"FT1","10.141.129.210","/nitro/v1/stat/lbvserver","ColumbusAPI_RO","Ph$rmAC4P!"
