@@ -1,32 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
+
+<head>
     <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <link rel="stylesheet" href="bootstrap.min.css">
     <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"> -->
-    
-    <!-- this line removes any default padding and style. you might only need one of these values set. -->
-    <style> body {padding: 0; margin: 0;} </style>
-    
-    </head>
 
-    <body>
-        <div class="container-fluid">
+    <!-- this line removes any default padding and style. you might only need one of these values set. -->
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container-fluid">
         <div class="row">
             <div class="table-responsive">
-            <table id="serverTable" class="table table-light table-hover">
-                <thead class="thead-dark">
-                    <td onclick="sortData('name','hostname')">Name</td>
-                    <td onclick="sortData('hostname','name')">Hostname</td>
-                    <!-- <td>Endpoint</td> -->
-                    <td onclick="sortData('leg','name')">Leg</td>
-                    <td onclick="sortData('status','name')">Status</td>
-                    <td onclick="sortData('availability','name')">Availability</td>
-                    <td>Retry</td>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
+                <table id="serverTable" class="table table-light table-hover">
+                    <thead class="thead-dark">
+                        <td onclick="sortData('name','hostname')">Name</td>
+                        <td onclick="sortData('hostname','name')">Hostname</td>
+                        <!-- <td>Endpoint</td> -->
+                        <td onclick="sortData('leg','name')">Leg</td>
+                        <td onclick="sortData('status','name')">Status</td>
+                        <td onclick="sortData('availability','name')">Availability</td>
+                        <td>Retry</td>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
             </div>
         </div>
         <div class="row">
@@ -34,353 +40,401 @@
                 <button id="refreshButton" class="btn btn-primary btn-block">refresh all</button>
             </div>
         </div>
+        <div id="dropDownDiv"></div>
         <div class="row">
             <div class="col-md-12">
                 <button id="envPickedButton" class="btn btn-primary btn-block">FUDGE FT1</button>
             </div>
         </div>
-        </div>
+    </div>
 
-        <script>
-            const electron = require('electron');
-            const {ipcRenderer} = electron;
-            
-            let serverList;
-            let envTypeList;
-            let subLBList = [];
-            let lbServerList = [];
+    <script>
+        const electron = require('electron');
+        const { ipcRenderer } = electron;
 
-            let sortOptions = {"currentField":null,"currentDir":-1}
+        let serverList;
+        let envTypeList;
+        let subLBList = [];
+        let lbServerList = [];
+        let requestCount = 0;
+        let replyCount = 0;
 
-            const serverTable = document.querySelector('#tableBody');
-            const refreshButton = document.querySelector('#refreshButton');
-            refreshButton.addEventListener("click", refresh);
+        let sortOptions = { "currentField": null, "currentDir": -1 }
 
-            const fudgeButton = document.querySelector('#envPickedButton');
-            fudgeButton.addEventListener("click", fudgeFT1);
+        const serverTable = document.querySelector('#tableBody');
+        const refreshButton = document.querySelector('#refreshButton');
+        refreshButton.addEventListener("click", refresh);
 
-            function refresh(e){
-                ipcRenderer.send('refreshList');
+        const fudgeButton = document.querySelector('#envPickedButton');
+        fudgeButton.addEventListener("click", fudgePick);
+
+        function refresh(e) {
+            ipcRenderer.send('refreshList');
+        }
+
+        function sortData(field, field2) {
+
+            if (sortOptions.currentField == field) {
+                sortOptions.currentDir *= -1;
+            } else {
+                sortOptions.currentField = field;
+                sortOptions.currentDir = 1
             }
 
-            function sortData(field, field2){
+            serverList.sort(function (a, b) {
 
-                if(sortOptions.currentField == field){
-                    sortOptions.currentDir*=-1;
-                } else {
-                    sortOptions.currentField = field;
-                    sortOptions.currentDir = 1
+                var x = a[field] == null || (!a[field]) ? "zzz" : a[field].toLowerCase();
+                var y = b[field] == null || (!b[field]) ? "zzz" : b[field].toLowerCase();
+
+                if (x < y) { return -1 * sortOptions.currentDir; }
+                if (x > y) { return 1 * sortOptions.currentDir; }
+
+                if (x == y && field2) {
+                    var x2 = a[field2] == null || (!a[field2]) ? "zzz" : a[field2].toLowerCase();
+                    var y2 = b[field2] == null || (!b[field2]) ? "zzz" : b[field2].toLowerCase();
+                    if (x2 < y2) { return -1 * sortOptions.currentDir; }
+                    if (x2 > y2) { return 1 * sortOptions.currentDir; }
                 }
+                return 0;
+            });
+            drawTable();
+        }
 
-                serverList.sort(function(a,b){
-                    
-                    var x = a[field] == null || (!a[field]) ? "zzz" : a[field].toLowerCase();
-                    var y = b[field] == null || (!b[field]) ? "zzz" : b[field].toLowerCase();
-
-                    if(x<y){return -1 *  sortOptions.currentDir;}
-                    if(x>y){return 1 * sortOptions.currentDir;}
-
-                    if(x==y && field2){
-                        var x2 = a[field2] == null || (!a[field2]) ? "zzz" : a[field2].toLowerCase();
-                        var y2 = b[field2] == null || (!b[field2]) ? "zzz" : b[field2].toLowerCase();
-                        if(x2<y2){return -1 * sortOptions.currentDir;}
-                        if(x2>y2){return 1 * sortOptions.currentDir;}
-                    }
-                    return 0;
-                });
-                drawTable();
-            }
-
-            function drawTable(){
-                serverTable.innerHTML = "";
-                let i = 0
-                for(let server of serverList){
-                    let row = serverTable.insertRow(i);
-                    let cell1 = row.insertCell();
-                    let cell2 = row.insertCell();
-                    //let cell3 = row.insertCell(2);
-                    let cell4 = row.insertCell();
-                    let cell5 = row.insertCell();
-                    let cell6 = row.insertCell();
-                    let cellbtn = row.insertCell();
-                    cell1.innerHTML = server.name;
-                    cell2.innerHTML = server.hostname + ":" + server.port;
-                    //cell3.innerHTML = server.endpoint;
-                    if(server.leg){
+        function drawTable() {
+            serverTable.innerHTML = "";
+            let i = 0
+            for (let server of serverList) {
+                let row = serverTable.insertRow(i);
+                let cell1 = row.insertCell();
+                let cell2 = row.insertCell();
+                //let cell3 = row.insertCell(2);
+                let cell4 = row.insertCell();
+                let cell5 = row.insertCell();
+                let cell6 = row.insertCell();
+                let cellbtn = row.insertCell();
+                cell1.innerHTML = server.name;
+                cell2.innerHTML = server.hostname + ":" + server.port;
+                //cell3.innerHTML = server.endpoint;
+                if (server.leg) {
                     cell4.innerHTML = server.leg;
-                    } else {
-                        cell4.innerHTML = server.response; 
-                    }
-                    cell5.innerHTML = server.status;
-                    cell6.innerHTML = server.availability;
-                    let refButton = document.createElement("button");
+                } else {
+                    cell4.innerHTML = server.response;
+                }
+                cell5.innerHTML = server.status;
+                cell6.innerHTML = server.availability;
+                let refButton = document.createElement("button");
+                refButton.textContent = "refresh";
+                refButton.type = "button";
+                refButton.setAttribute('data-server-name', server.name);
+                refButton.setAttribute('data-server-hostname', server.hostname);
+                refButton.setAttribute('data-server-endpoint', server.endpoint);
+                refButton.setAttribute('data-server-port', server.port);
+                refButton.onclick = individualRefresh;
+
+                if (server.leg == "querying...") {
+                    row.className = "table-warning"
+                    refButton.classList = "btn btn-outline-warning";
+                    refButton.textContent = "retry";
+                } else if (server.response == "connection error, status:0") {
+                    row.classList = "table-danger";
+                    refButton.classList = "btn btn-danger";
+                    refButton.textContent = "retry";
+                } else {
+                    row.classList = "table-success";
+                    refButton.classList = "btn btn-success";
                     refButton.textContent = "refresh";
-                    refButton.type = "button";
-                    refButton.setAttribute('data-server-name',server.name);
-                    refButton.setAttribute('data-server-hostname',server.hostname);
-                    refButton.setAttribute('data-server-endpoint',server.endpoint);
-                    refButton.setAttribute('data-server-port',server.port);
-                    refButton.onclick = individualRefresh;
-
-                    if(server.leg == "querying...") {
-                        row.className = "table-warning"
-                        refButton.classList = "btn btn-outline-warning";
-                        refButton.textContent = "retry";
-                    } else if(server.response == "connection error, status:0") {
-                        row.classList = "table-danger";
-                        refButton.classList = "btn btn-danger";
-                        refButton.textContent = "retry";                        
-                    } else {
-                        row.classList = "table-success";
-                        refButton.classList = "btn btn-success";
-                        refButton.textContent = "refresh";
-                    }
-                    cellbtn.appendChild(refButton);
-                    i++;
                 }
+                cellbtn.appendChild(refButton);
+                i++;
             }
+        }
 
 
-            ipcRenderer.on('updateServerList',function(e,serverData){
-                serverList = serverData;
-                drawTable();
-                requestAllServerDetails();
-            })
-            ipcRenderer.on('drawTable',drawTable)
-            ipcRenderer.on('getAllServerDetails',requestAllServerDetails)
-            ipcRenderer.on('updateEnvTypeList',function(e,envTypeData){
-                envTypeList = envTypeData;
-                console.log(envTypeList);
-            })
+        ipcRenderer.on('updateServerList', function (e, serverData) {
+            serverList = serverData;
+            drawTable();
+            requestAllServerDetails();
+        })
+        ipcRenderer.on('drawTable', drawTable)
+        ipcRenderer.on('getAllServerDetails', requestAllServerDetails)
+        ipcRenderer.on('updateEnvTypeList', function (e, _envTypeData) {
+            updateEnvTypeList(_envTypeData);
+        })
 
-            function fudgeFT1(){
-                pickedEnvType('FT');
+        function updateEnvTypeList(envTypeData){
+            envTypeList = envTypeData;
+            console.log(envTypeList);
+
+            dropDownDiv = document.querySelector('#dropDownDiv');
+            let newList = document.createElement("select");
+
+            for (env of envTypeList){
+                newList.appendChild(new Option(env.envname, env.envname));
             }
+            // newList.appendChild(new Option("my label 1", "my value 1"));
+            // newList.appendChild(new Option("my label 2", "my value 2"));
+            // newList.appendChild(new Option("my label 3", "my value 3"));
+            dropDownDiv.appendChild(newList);
+            let pickEnvTypeBtn = document.createElement("button");
+            pickEnvTypeBtn.textContent = "Select";
+            pickEnvTypeBtn.type = "button";
+            pickEnvTypeBtn.addEventListener('click', function(){
+                console.log(newList.value);
+                pickedEnvType(newList.value);
+            });
+            dropDownDiv.appendChild(pickEnvTypeBtn);
+        }
 
-            function pickedEnvType(_envType){
-                let envDetails;
-                envDetails = getMasterLBAddressForEnvType(_envType, envTypeList);
-                console.log(envDetails);
-                let masterLBAddress = 'http://' + envDetails.hostname + envDetails.endpoint;
-                console.log(masterLBAddress);
-                getRequest(gotSubLBList,masterLBAddress,envDetails, envDetails.username, envDetails.password);
-            }
+        function fudgePick() {
+            pickedEnvType('TEST');
+        }
+        
+        // function pickEnvType(){
 
-            function getMasterLBAddressForEnvType(_envType, _envTypeList){
-                //let address;
-                for(env of _envTypeList){
-                    if(env.envName = _envType){
-                        return env;
+        // }
+
+        function pickedEnvType(_envType) {
+            console.log(_envType);
+            let envDetails;
+             if (envDetails = getMasterLBAddressForEnvType(_envType, envTypeList)){
+            console.log(envDetails);
+            let masterLBAddress = 'http://' + envDetails.hostname + envDetails.endpoint;
+            console.log(masterLBAddress);
+            getRequest(gotSubLBList, masterLBAddress, envDetails, envDetails.username, envDetails.password);
+             } else {
+                 console.log(_envType + " doesn't exist");
+             }
+        }
+
+        function getMasterLBAddressForEnvType(_envType, _envTypeList) {
+            //let address;
+            for (env of _envTypeList) {
+                if (env.envname == _envType) {
+                    return env;
                     //address = 'https://' + env.hostname + env.endpoint
-                        break;
-                    }
+                    break;
                 }
-                return null;
+            }
+            return false;
+        }
+
+        function gotSubLBList(data, _envDetails) {
+            subLBList = [];
+            try {
+                let masterLBResponse = JSON.parse(data)
+                subLBList = masterLBResponse.lbvserver;
+                for (subLB of subLBList) {
+                    //console.log(subLB.name);
+                    subtext = subLB.name.split('-');
+                    subLB.splitEnvName = subtext[0];
+                    subLB.splitServerType = subtext[1];
+                    subLB.splitLeg = subtext[2];
+                }
+                console.log(subLBList);
+            }
+            catch (err) {
+                console.log('BAD Response from Master LB');
+                console.log(err);
             }
 
-            function gotSubLBList(data,_envDetails){
-                subLBList = [];
-                try{
-                    let masterLBResponse = JSON.parse(data)
-                    subLBList = masterLBResponse.lbvserver;
-                    for(subLB of subLBList){
-                        console.log(subLB.name);
-                        subtext = subLB.name.split('-');
-                        subLB.splitEnvName = subtext[0];
-                        subLB.splitServerType = subtext[1];
-                        subLB.splitLeg = subtext[2];
-                    }
-                    console.log(subLBList);
-                } 
-                catch(err) {
-                    console.log('BAD Response from Master LB');
-                    console.log(err);
-                }
+            getServerListFromSubLBList(subLBList, _envDetails);
+        }
 
-                getServerListFromSubLBList(subLBList,_envDetails);
+        function getServerListFromSubLBList(_subLBList, _envDetails) {
+
+            lbServerList = [];
+            requestCount = subLBList.length;
+            replyCount = 0;
+            console.log(requestCount);
+            for (subLB of subLBList) {
+                //console.log(subLB);
+                let subLBAddress = 'http://' + _envDetails.hostname + _envDetails.endpoint + "/" + subLB.name + "?statbindings=yes";
+                //http://10.141.129.210/nitro/v1/stat/lbvserver/FT1-UIS-X?statbindings=yes
+                getRequest(gotSubServerList, subLBAddress, subLB, _envDetails.username, _envDetails.password);
             }
+            //console.log(lbServerList);
 
-            function getServerListFromSubLBList(_subLBList, _envDetails){
+        }
 
-                for(subLB of subLBList){
-                    let subLBAddress = 'http://' + _envDetails.hostname + _envDetails.endpoint + "/" + subLB.name + "?statbindings=yes";
-                    //http://10.141.129.210/nitro/v1/stat/lbvserver/FT1-UIS-X?statbindings=yes
-                    getRequest(gotSubServerList,subLBAddress,subLB,_envDetails.username, _envDetails.password);
+        function gotSubServerList(data, _subLB) {
+            // console.log(JSON.parse(data));
+
+            //and this gives you the servers associated with this LB
+
+            // lbvserver[0].servicegroupmember[n].primaryipaddress
+            // lbvserver[0].servicegroupmember[n].primaryport
+            // lbvserver[0].servicegroupmember[n].state
+            replyCount++;
+            try {
+                let subLBResponse = JSON.parse(data)
+                let subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
+                for (subLBServer of subLBServerList) {
+                    console.log(subLBServer);
+                    lbServerList.push(subLBServer);
+                    // subtext = subLB.name.split('-');
+                    // subLB.splitEnvName = subtext[0];
+                    // subLB.splitServerType = subtext[1];
+                    // subLB.splitLeg = subtext[2];
                 }
-
+                // console.log(subLBServerList);
                 console.log(lbServerList);
-
+            }
+            catch (err) {
+                console.log('BAD Response from Sub LB');
+                console.log(_subLB);
+                console.log(err);
+            }
+            finally {
+                if (requestCount == replyCount) { processServers() };
             }
 
-            function gotSubServerList(data,_subLB){
-                // console.log(JSON.parse(data));
+        }
 
-                    //and this gives you the servers associated with this LB
+        function processServers() {
+            console.log(lbServerList);
+        }
 
-                    // lbvserver[0].servicegroupmember[n].primaryipaddress
-                    // lbvserver[0].servicegroupmember[n].primaryport
-                    // lbvserver[0].servicegroupmember[n].state
-                try{
-                    let subLBResponse = JSON.parse(data)
-                    let subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
-                    for(subLBServer of subLBServerList){
-                        //console.log(subLBServer);
-                        lbServerList.push(subLBServer);
-                        // subtext = subLB.name.split('-');
-                        // subLB.splitEnvName = subtext[0];
-                        // subLB.splitServerType = subtext[1];
-                        // subLB.splitLeg = subtext[2];
-                    }
-                    // console.log(subLBServerList);
-                } 
-                catch(err) {
-                    console.log('BAD Response from Sub LB');
-                    console.log(_subLB);
-                    console.log(err);
-                }
 
+        function requestAllServerDetails() {
+            for (let server of serverList) {
+                server.leg = "querying...";
+                getServerDetails(server);
             }
+        }
 
-
-            function requestAllServerDetails(){
-                for(let server of serverList){
-                        server.leg="querying...";
-                        getServerDetails(server);
-                }
-            }
-
-            function individualRefresh(e){
-                for(let server of serverList){
-                    if(server.name == e.target.attributes['data-server-name'].value){
-                    server.leg="querying...";
+        function individualRefresh(e) {
+            for (let server of serverList) {
+                if (server.name == e.target.attributes['data-server-name'].value) {
+                    server.leg = "querying...";
                     drawTable();
                     getServerDetails(server);
+                }
+            }
+        }
+
+        function getServerDetails(server) {
+
+            // if(!server.name){
+            //     server.name = server.target.attributes['data-server-name'].value;
+            //     server.hostname = server.target.attributes['data-server-hostname'].value; 
+            //     server.endpoint = server.target.attributes['data-server-endpoint'].value; 
+            //     server.port = server.target.attributes['data-server-port'].value;
+            // }
+
+            // server.leg = "querying...";
+            // drawTable();
+
+            let url = "http://" + server.hostname + ":" + server.port + server.endpoint;
+            getRequest(updateServerResults, url, server.name);
+        }
+
+        function getRequest(callback, url, id, username, password) {
+            //console.log(url,id);
+            var xhr = new XMLHttpRequest();
+            // xhr.onerror = function(e){
+            //   console.log(e);
+            //   callback("Unknown Error Occured. Server response not received.",id);
+            // };
+            xhr.open("GET", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            if (username) {
+                xhr.setRequestHeader("Authorization", "Basic " + btoa(username + ":" + password))
+            }
+
+            xhr.send();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    callback(xhr.responseText, id);
+                }
+                if (xhr.readyState == 4 && xhr.status != 200) {
+                    callback("connection error, status:" + xhr.status, id);
+                }
+            }
+        }
+
+        function updateServerResults(data, serverName) {
+            //format = {"status":{"available":true,"currentStatus":"UP_AND_RUNNING","label":"LEGX"}}
+            for (server of serverList) {
+                if (serverName == server.name) {
+                    server.response = data;
+                    try {
+                        server.leg = JSON.parse(data).status.label;
+                        //break;
+                    } catch (e) {
+                        server.leg = data;
+                    }
+                    try {
+                        server.status = JSON.parse(data).status.currentStatus;
+                        //break;
+                    } catch (e) {
+                        server.status = null;
+                    }
+                    try {
+                        server.availability = JSON.parse(data).status.available.toString();
+                        //break;
+                    } catch (e) {
+                        server.availability = null;
                     }
                 }
             }
+            drawTable();
+        }
 
-            function getServerDetails(server){
-
-                // if(!server.name){
-                //     server.name = server.target.attributes['data-server-name'].value;
-                //     server.hostname = server.target.attributes['data-server-hostname'].value; 
-                //     server.endpoint = server.target.attributes['data-server-endpoint'].value; 
-                //     server.port = server.target.attributes['data-server-port'].value;
-                // }
-
-                // server.leg = "querying...";
-                // drawTable();
-
-                let url = "http://" + server.hostname + ":" + server.port + server.endpoint;
-                getRequest(updateServerResults, url, server.name);
-            }
-
-            function getRequest(callback, url, id, username, password){
-                console.log(url,id);
-                var xhr = new XMLHttpRequest();
-                // xhr.onerror = function(e){
-                //   console.log(e);
-                //   callback("Unknown Error Occured. Server response not received.",id);
-                // };
-                xhr.open("GET", url, true);
-                xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-                if(username){
-                    xhr.setRequestHeader("Authorization", "Basic " + btoa(username + ":" + password))
-                }
-
-                xhr.send();
-                xhr.onreadystatechange = function() {
-                    if(xhr.readyState == 4 && xhr.status == 200) {
-                    callback(xhr.responseText,id);
-                    }
-                    if(xhr.readyState == 4 && xhr.status != 200) {
-                    callback("connection error, status:" + xhr.status,id);
-                    }
-                }  
-            }
-
-            function updateServerResults(data, serverName){
-                //format = {"status":{"available":true,"currentStatus":"UP_AND_RUNNING","label":"LEGX"}}
-                for(server of serverList){
-                    if(serverName == server.name) {
-                        server.response = data;
-                        try{
-                            server.leg = JSON.parse(data).status.label;
-                        //break;
-                        } catch (e) {
-                            server.leg = data;
-                        }
-                        try{
-                            server.status = JSON.parse(data).status.currentStatus;
-                        //break;
-                        } catch (e) {
-                            server.status = null;
-                        }
-                        try{
-                            server.availability = JSON.parse(data).status.available.toString();
-                        //break;
-                        } catch (e) {
-                            server.availability = null;
-                        }
-                    }
-                }
-                drawTable();
-            }
-
-            function sortTable(n) {
-                var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-                table = document.getElementById("serverTable");
-                switching = true;
-                // Set the sorting direction to ascending:
-                dir = "asc"; 
-                /* Make a loop that will continue until
-                no switching has been done: */
-                while (switching) {
-                    // Start by saying: no switching is done:
-                    switching = false;
-                    rows = table.getElementsByTagName("TR");
-                    /* Loop through all table rows (except the
-                    first, which contains table headers): */
-                    for (i = 1; i < (rows.length - 1); i++) {
-                        // Start by saying there should be no switching:
-                        shouldSwitch = false;
-                        /* Get the two elements you want to compare,
-                        one from current row and one from the next: */
-                        x = rows[i].getElementsByTagName("TD")[n];
-                        y = rows[i + 1].getElementsByTagName("TD")[n];
-                        /* Check if the two rows should switch place,
-                        based on the direction, asc or desc: */
-                        if (dir == "asc") {
-                            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+        function sortTable(n) {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            table = document.getElementById("serverTable");
+            switching = true;
+            // Set the sorting direction to ascending:
+            dir = "asc";
+            /* Make a loop that will continue until
+            no switching has been done: */
+            while (switching) {
+                // Start by saying: no switching is done:
+                switching = false;
+                rows = table.getElementsByTagName("TR");
+                /* Loop through all table rows (except the
+                first, which contains table headers): */
+                for (i = 1; i < (rows.length - 1); i++) {
+                    // Start by saying there should be no switching:
+                    shouldSwitch = false;
+                    /* Get the two elements you want to compare,
+                    one from current row and one from the next: */
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                    /* Check if the two rows should switch place,
+                    based on the direction, asc or desc: */
+                    if (dir == "asc") {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
                             // If so, mark as a switch and break the loop:
                             shouldSwitch = true;
                             break;
-                            }
-                        } else if (dir == "desc") {
-                            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        }
+                    } else if (dir == "desc") {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
                             // If so, mark as a switch and break the loop:
-                                shouldSwitch = true;
-                                break;
-                            }
+                            shouldSwitch = true;
+                            break;
                         }
                     }
-                    if (shouldSwitch) {
+                }
+                if (shouldSwitch) {
                     /* If a switch has been marked, make the switch
                     and mark that a switch has been done: */
                     rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
                     switching = true;
                     // Each time a switch is done, increase this count by 1:
-                    switchcount ++; 
-                    } else {
+                    switchcount++;
+                } else {
                     /* If no switching has been done AND the direction is "asc",
                     set the direction to "desc" and run the while loop again. */
-                        if (switchcount == 0 && dir == "asc") {
-                            dir = "desc";
-                            switching = true;
-                        }
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
                     }
                 }
             }
-        </script>
-    </body>
-  </html>
+        }
+    </script>
+</body>
+
+</html>
