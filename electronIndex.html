@@ -20,6 +20,10 @@
 <body>
     <div class="container-fluid">
         <div class="row">
+            <div id="dropDownDivEnvType"></div>
+            <div id="dropDownDivSubEnv"></div>
+        </div>
+        <div class="row">
             <div class="table-responsive">
                 <table id="serverTable" class="table table-light table-hover">
                     <thead class="thead-dark">
@@ -40,12 +44,12 @@
                 <button id="refreshButton" class="btn btn-primary btn-block">refresh all</button>
             </div>
         </div>
-        <div id="dropDownDiv"></div>
-        <div class="row">
+
+        <!-- <div class="row">
             <div class="col-md-12">
                 <button id="envPickedButton" class="btn btn-primary btn-block">FUDGE FT1</button>
             </div>
-        </div>
+        </div> -->
     </div>
 
     <script>
@@ -65,8 +69,8 @@
         const refreshButton = document.querySelector('#refreshButton');
         refreshButton.addEventListener("click", refresh);
 
-        const fudgeButton = document.querySelector('#envPickedButton');
-        fudgeButton.addEventListener("click", fudgePick);
+        // const fudgeButton = document.querySelector('#envPickedButton');
+        // fudgeButton.addEventListener("click", fudgePick);
 
         function refresh(e) {
             ipcRenderer.send('refreshList');
@@ -161,34 +165,32 @@
             updateEnvTypeList(_envTypeData);
         })
 
-        function updateEnvTypeList(envTypeData){
+        function updateEnvTypeList(envTypeData) {
             envTypeList = envTypeData;
             console.log(envTypeList);
 
-            dropDownDiv = document.querySelector('#dropDownDiv');
+            dropDownDivEnvType = document.querySelector('#dropDownDivEnvType');
             let newList = document.createElement("select");
 
-            for (env of envTypeList){
+            for (env of envTypeList) {
                 newList.appendChild(new Option(env.envname, env.envname));
             }
-            // newList.appendChild(new Option("my label 1", "my value 1"));
-            // newList.appendChild(new Option("my label 2", "my value 2"));
-            // newList.appendChild(new Option("my label 3", "my value 3"));
-            dropDownDiv.appendChild(newList);
+            dropDownDivEnvType.appendChild(newList);
+
             let pickEnvTypeBtn = document.createElement("button");
             pickEnvTypeBtn.textContent = "Select";
             pickEnvTypeBtn.type = "button";
-            pickEnvTypeBtn.addEventListener('click', function(){
+            pickEnvTypeBtn.addEventListener('click', function () {
                 console.log(newList.value);
                 pickedEnvType(newList.value);
             });
-            dropDownDiv.appendChild(pickEnvTypeBtn);
+            dropDownDivEnvType.appendChild(pickEnvTypeBtn);
         }
 
-        function fudgePick() {
-            pickedEnvType('TEST');
-        }
-        
+        // function fudgePick() {
+        //     pickedEnvType('TEST');
+        // }
+
         // function pickEnvType(){
 
         // }
@@ -196,14 +198,14 @@
         function pickedEnvType(_envType) {
             console.log(_envType);
             let envDetails;
-             if (envDetails = getMasterLBAddressForEnvType(_envType, envTypeList)){
-            console.log(envDetails);
-            let masterLBAddress = 'http://' + envDetails.hostname + envDetails.endpoint;
-            console.log(masterLBAddress);
-            getRequest(gotSubLBList, masterLBAddress, envDetails, envDetails.username, envDetails.password);
-             } else {
-                 console.log(_envType + " doesn't exist");
-             }
+            if (envDetails = getMasterLBAddressForEnvType(_envType, envTypeList)) {
+                console.log(envDetails);
+                let masterLBAddress = 'http://' + envDetails.hostname + envDetails.endpoint;
+                console.log(masterLBAddress);
+                getRequest(gotSubLBList, masterLBAddress, envDetails, envDetails.username, envDetails.password);
+            } else {
+                console.log(_envType + " doesn't exist");
+            }
         }
 
         function getMasterLBAddressForEnvType(_envType, _envTypeList) {
@@ -216,6 +218,25 @@
                 }
             }
             return false;
+        }
+
+        function setupSubEnvDropDown(_inList, _envDetails) {
+            dropDownDivSubEnv = document.querySelector('#dropDownDivSubEnv');
+            let newList = document.createElement("select");
+
+            for (env of _inList) {
+                newList.appendChild(new Option(env.splitEnvName, env.splitEnvName));
+            }
+            dropDownDivSubEnv.appendChild(newList);
+
+            let pickSubEnvBtn = document.createElement("button");
+            pickSubEnvBtn.textContent = "Select";
+            pickSubEnvBtn.type = "button";
+            pickSubEnvBtn.addEventListener('click', function () {
+                console.log(newList.value);
+                getServerListFromSubLBList(newList.value, subLBList, _envDetails);
+            });
+            dropDownDivSubEnv.appendChild(pickSubEnvBtn);
         }
 
         function gotSubLBList(data, _envDetails) {
@@ -236,21 +257,23 @@
                 console.log('BAD Response from Master LB');
                 console.log(err);
             }
-
-            getServerListFromSubLBList(subLBList, _envDetails);
+            setupSubEnvDropDown(subLBList, _envDetails);
+            //getServerListFromSubLBList(subLBList, _envDetails);
         }
 
-        function getServerListFromSubLBList(_subLBList, _envDetails) {
+        function getServerListFromSubLBList(_selectedEnvName, _subLBList, _envDetails) {
 
             lbServerList = [];
             requestCount = subLBList.length;
             replyCount = 0;
             console.log(requestCount);
             for (subLB of subLBList) {
-                //console.log(subLB);
-                let subLBAddress = 'http://' + _envDetails.hostname + _envDetails.endpoint + "/" + subLB.name + "?statbindings=yes";
-                //http://10.141.129.210/nitro/v1/stat/lbvserver/FT1-UIS-X?statbindings=yes
-                getRequest(gotSubServerList, subLBAddress, subLB, _envDetails.username, _envDetails.password);
+                if (subLB.splitEnvName == _selectedEnvName) {
+                    //console.log(subLB);
+                    let subLBAddress = 'http://' + _envDetails.hostname + _envDetails.endpoint + "/" + subLB.name + "?statbindings=yes";
+                    //http://10.141.129.210/nitro/v1/stat/lbvserver/FT1-UIS-X?statbindings=yes
+                    getRequest(gotSubServerList, subLBAddress, subLB, _envDetails.username, _envDetails.password);
+                }
             }
             //console.log(lbServerList);
 
@@ -277,7 +300,7 @@
                     // subLB.splitLeg = subtext[2];
                 }
                 // console.log(subLBServerList);
-                console.log(lbServerList);
+                console.log(lbServerList.length);
             }
             catch (err) {
                 console.log('BAD Response from Sub LB');
@@ -291,6 +314,7 @@
         }
 
         function processServers() {
+            console.log('AllSubLBsReplied');
             console.log(lbServerList);
         }
 
