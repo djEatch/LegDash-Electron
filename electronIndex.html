@@ -155,21 +155,12 @@
             }
         }
 
-
-        ipcRenderer.on('updateServerList', function (e, serverData) {
-            serverList = serverData;
-            drawTable();
-            requestAllServerDetails();
-        })
-        ipcRenderer.on('drawTable', drawTable)
-        ipcRenderer.on('getAllServerDetails', requestAllServerDetails)
         ipcRenderer.on('updateEnvTypeList', function (e, _envTypeData) {
             updateEnvTypeList(_envTypeData);
         })
 
         function updateEnvTypeList(envTypeData) {
             envTypeList = envTypeData;
-            console.log(envTypeList);
 
             dropDownDivEnvType = document.querySelector('#dropDownDivEnvType');
             let newList = document.createElement("select");
@@ -177,33 +168,37 @@
             for (env of envTypeList) {
                 newList.appendChild(new Option(env.envname, env.envname));
             }
+            newList.addEventListener('change', function(){
+                itemtoKill = document.querySelector('#pickSubEnvBtn');
+                if(itemtoKill){itemtoKill.parentNode.removeChild(itemtoKill);};
+                itemtoKill = document.querySelector('#dropDownSubEnv');
+                if(itemtoKill){itemtoKill.parentNode.removeChild(itemtoKill);};
+                serverList = [];
+                drawTable();
+            })
             dropDownDivEnvType.appendChild(newList);
 
             let pickEnvTypeBtn = document.createElement("button");
             pickEnvTypeBtn.textContent = "Select";
             pickEnvTypeBtn.type = "button";
+            pickEnvTypeBtn.classList= "btn-primary btn-block";
             pickEnvTypeBtn.addEventListener('click', function () {
-                console.log(newList.value);
+                itemtoKill = document.querySelector('#pickSubEnvBtn');
+                if(itemtoKill){itemtoKill.parentNode.removeChild(itemtoKill);};
+                itemtoKill = document.querySelector('#dropDownSubEnv');
+                if(itemtoKill){itemtoKill.parentNode.removeChild(itemtoKill);};
+                serverList = [];
+                drawTable();
                 pickedEnvType(newList.value);
             });
             dropDownDivEnvType.appendChild(pickEnvTypeBtn);
         }
 
-        // function fudgePick() {
-        //     pickedEnvType('TEST');
-        // }
-
-        // function pickEnvType(){
-
-        // }
-
         function pickedEnvType(_envType) {
-            console.log(_envType);
+
             let envDetails;
             if (envDetails = getMasterLBAddressForEnvType(_envType, envTypeList)) {
-                console.log(envDetails);
                 let masterLBAddress = 'http://' + envDetails.hostname + envDetails.endpoint;
-                console.log(masterLBAddress);
                 getRequest(gotSubLBList, masterLBAddress, envDetails, envDetails.username, envDetails.password);
             } else {
                 console.log(_envType + " doesn't exist");
@@ -211,11 +206,9 @@
         }
 
         function getMasterLBAddressForEnvType(_envType, _envTypeList) {
-            //let address;
             for (env of _envTypeList) {
                 if (env.envname == _envType) {
                     return env;
-                    //address = 'https://' + env.hostname + env.endpoint
                     break;
                 }
             }
@@ -231,12 +224,14 @@
                 newList.appendChild(new Option(env.splitEnvName, env.splitEnvName));
             }
             dropDownDivSubEnv.appendChild(newList);
+            newList.id = "dropDownSubEnv"
 
             let pickSubEnvBtn = document.createElement("button");
             pickSubEnvBtn.textContent = "Select";
+            pickSubEnvBtn.id = "pickSubEnvBtn"
             pickSubEnvBtn.type = "button";
+            pickSubEnvBtn.classList= "btn-primary btn-block";
             pickSubEnvBtn.addEventListener('click', function () {
-                console.log(newList.value);
                 getServerListFromSubLBList(newList.value, subLBList, _envDetails);
             });
             dropDownDivSubEnv.appendChild(pickSubEnvBtn);
@@ -248,20 +243,18 @@
                 let masterLBResponse = JSON.parse(data)
                 subLBList = masterLBResponse.lbvserver;
                 for (subLB of subLBList) {
-                    //console.log(subLB.name);
                     subtext = subLB.name.split('-');
                     subLB.splitEnvName = subtext[0];
                     subLB.splitServerType = subtext[1];
                     subLB.splitLeg = subtext[2];
                 }
-                console.log(subLBList);
+
             }
             catch (err) {
                 console.log('BAD Response from Master LB');
                 console.log(err);
             }
             setupSubEnvDropDown(subLBList, _envDetails);
-            //getServerListFromSubLBList(subLBList, _envDetails);
         }
 
         function getServerListFromSubLBList(_selectedEnvName, _subLBList, _envDetails) {
@@ -269,40 +262,25 @@
             lbServerList = [];
             requestCount = subLBList.length;
             replyCount = 0;
-            console.log(requestCount);
+
             for (subLB of subLBList) {
                 if (subLB.splitEnvName == _selectedEnvName) {
-                    //console.log(subLB);
                     let subLBAddress = 'http://' + _envDetails.hostname + _envDetails.endpoint + "/" + subLB.name + "?statbindings=yes";
                     //http://10.141.129.210/nitro/v1/stat/lbvserver/FT1-UIS-X?statbindings=yes
                     getRequest(gotSubServerList, subLBAddress, subLB, _envDetails.username, _envDetails.password);
                 }
             }
-            //console.log(lbServerList);
 
         }
 
         function gotSubServerList(data, _subLB) {
-            // console.log(JSON.parse(data));
-
-            //and this gives you the servers associated with this LB
-
-            // lbvserver[0].servicegroupmember[n].primaryipaddress
-            // lbvserver[0].servicegroupmember[n].primaryport
-            // lbvserver[0].servicegroupmember[n].state
             replyCount++;
             try {
                 let subLBResponse = JSON.parse(data)
                 let subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
                 for (subLBServer of subLBServerList) {
-                    console.log(subLBServer);
                     lbServerList.push(subLBServer);
-                    // subtext = subLB.name.split('-');
-                    // subLB.splitEnvName = subtext[0];
-                    // subLB.splitServerType = subtext[1];
-                    // subLB.splitLeg = subtext[2];
                 }
-                // console.log(subLBServerList);
                 console.log(lbServerList.length);
             }
             catch (err) {
@@ -318,36 +296,23 @@
 
         function processServers() {
             console.log('AllSubLBsReplied');
-            console.log(lbServerList);
+
             serverList = [];
             for (let lbServer of lbServerList) {
-                console.log(lbServer);
                 splitTextQuestion = lbServer.servicegroupname.split('?');
                 splitTextHyphen = splitTextQuestion[0].split('-');
-                // let server = {
-                //     name: splitTextQuestion[0],
-                //     ip: lbServer.primaryipaddress,
-                //     hostname: splitTextQuestion[1],
-                //     port: splitTextQuestion[2],
-                //     endpoint: "/application-status-monitor/rest/applicationstatusmonitor/status.json",
-                //     response : "querying...",
-                //     leg : null,
-                //     availability : null,
-                //     status : null
-                // }
                 lbServer.name = splitTextQuestion[0].slice(0, -4);
                 lbServer.ip = lbServer.primaryipaddress;
-                lbServer.hostname = splitTextQuestion[1]+".corp.internal";
+                lbServer.hostname = splitTextQuestion[1] + ".corp.internal";
                 lbServer.port = splitTextQuestion[2];
                 lbServer.endpoint = "/application-status-monitor/rest/applicationstatusmonitor/status.json";
                 lbServer.response = "querying...";
                 lbServer.leg = null;
                 lbServer.availability = null;
                 lbServer.status = null;
-                // serverList.push(server);
             }
+
             serverList = lbServerList;
-            console.log(serverList);
             drawTable();
             requestAllServerDetails();
 
@@ -373,27 +338,12 @@
 
         function getServerDetails(server) {
 
-            // if(!server.name){
-            //     server.name = server.target.attributes['data-server-name'].value;
-            //     server.hostname = server.target.attributes['data-server-hostname'].value; 
-            //     server.endpoint = server.target.attributes['data-server-endpoint'].value; 
-            //     server.port = server.target.attributes['data-server-port'].value;
-            // }
-
-            // server.leg = "querying...";
-            // drawTable();
-
             let url = "http://" + server.hostname + ":" + server.port + server.endpoint;
             getRequest(updateServerResults, url, server);
         }
 
         function getRequest(callback, url, id, username, password) {
-            //console.log(url,id);
             var xhr = new XMLHttpRequest();
-            // xhr.onerror = function(e){
-            //   console.log(e);
-            //   callback("Unknown Error Occured. Server response not received.",id);
-            // };
             xhr.open("GET", url, true);
             xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
             if (username) {
@@ -437,6 +387,20 @@
                 }
             }
             drawTable();
+        }
+
+        class Server {
+
+            constructor(name, hostname, port, endpoint) {
+                this.name = name;
+                this.hostname = hostname;
+                this.port = port;
+                this.endpoint = endpoint;
+                this.response = null;
+                this.leg = null;
+                this.availability = null;
+                this.status = null;
+            }
         }
 
         function sortTable(n) {

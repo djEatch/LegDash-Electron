@@ -1,22 +1,16 @@
-const {app, BrowserWindow, Menu, ipcMain} = require('electron')
+const {app, BrowserWindow, Menu} = require('electron')
 const path = require('path')
 const url = require('url')
-
 const fs = require("fs");
-const http = require("http");
+
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
-let contents;
 
-let serverList = [];
-let csvUrl = __dirname + '/servers.txt';  // URL to web API
 let envFile = __dirname + '/EnvTypeList.txt';
 let envTypeList = [];
-//let subLBList = [];
 
-//app.on('ready', () => {readCsvData(), createWindow()})
 app.on('ready', function(){
 
     // Create the browser window.
@@ -24,7 +18,6 @@ app.on('ready', function(){
 
   // and load the index.html of the app.
   win.loadURL(url.format({
-    //pathname: path.join(__dirname, 'public','index.html'),
     pathname: path.join(__dirname, 'electronIndex.html'),
     protocol: 'file:',
     slashes: true
@@ -40,15 +33,11 @@ app.on('ready', function(){
 
   win.once('ready-to-show', () => {
     getEnvTypeList();
-    //loadData();
     win.show()
   })
 
-
   const winMenu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(winMenu);
-  
-  contents = win.webContents;
 
 });
 
@@ -58,7 +47,6 @@ function getEnvTypeList(){
 
   let allTextLines = data.split(/\r\n|\n/);
   let headers = allTextLines[0].split(',');
-  //let lines = [];
 
   for ( let i = 1; i < allTextLines.length; i++) {
       // split content based on comma
@@ -72,27 +60,6 @@ function getEnvTypeList(){
 
 }
 
-function loadData(){
-  serverList = [];
-  var data = fs.readFileSync(csvUrl).toString();
-
-  let allTextLines = data.split(/\r\n|\n/);
-  let headers = allTextLines[0].split(',');
-  //let lines = [];
-
-  for ( let i = 1; i < allTextLines.length; i++) {
-      // split content based on comma
-      let data = allTextLines[i].split(',');
-      if (data.length == headers.length) {
-          let myServer = new Server(data[0].replace(/['"]+/g, ''),data[1].replace(/['"]+/g, ''),data[2].replace(/['"]+/g, ''),data[3].replace(/['"]+/g, ''));
-          serverList.push(myServer);
-      }
-  }
-
-  win.webContents.send('updateServerList',serverList);
-}
-
-ipcMain.on('refreshList', loadData);
 
 class Env{
   constructor(envname, hostname, endpoint, username, password){
@@ -104,20 +71,6 @@ class Env{
   }
 }
 
-class Server {
-
-  constructor(name, hostname, port, endpoint) {
-    this.name = name;
-    this.hostname = hostname;
-    this.port = port;
-    this.endpoint = endpoint;
-    this.response = null;
-    this.leg = null;
-    this.availability = null;
-    this.status = null;
-  }
-}
-  
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
