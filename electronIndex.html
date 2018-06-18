@@ -81,6 +81,7 @@
 
         function refresh(e) {
             drawTable();
+            drawMultiTables();
             requestAllServerDetails();
             //ipcRenderer.send('refreshList'); <---- this is for old list in text file....
         }
@@ -111,6 +112,7 @@
                 return 0;
             });
             drawTable();
+            drawMultiTables();
         }
 
         function drawTable() {
@@ -162,27 +164,110 @@
             }
         }
 
-        function drawMultiTables(){
+        function drawMultiTables() {
 
             let tempLBList = []
-            for (server of serverList){
+            for (server of serverList) {
                 tempLBList.push(server.LBName);
             }
             tempLBList = tempLBList.filter(onlyUnique);
-            console.log(tempLBList);
-            // multiTableDiv.innerHTML = "";
-            // let tables =[];
-            // let table = document.createElement("table");
-            // let row = table.insertRow();
-            // let cell1 = row.insertCell();
-            // let cell2 = row.insertCell();
-            // cell1.innerHTML = "BLAH"
-            // cell2.innerHTML = "BLAH2"
-            // multiTableDiv.appendChild(table);
-            // tables.push(document.createElement("button"));
+
+            multiTableDiv.innerHTML = "";
+
+            for (currentLB of tempLBList) {
+                var h = document.createElement("H1");                // Create a <h1> element
+                var t = document.createTextNode(currentLB);     // Create a text node
+                h.appendChild(t);  // Append the text to <h1>
+                multiTableDiv.appendChild(h);
+
+                let table = document.createElement("table");
+                table.classList = "table table-light table-hover";
+
+                // Create an empty <thead> element and add it to the table:
+                var header = table.createTHead();
+                header.classList = "thead-dark";
+
+                // Create an empty <tr> element and add it to the first position of <thead>:
+                var row = header.insertRow(0);
+
+                // Insert a new cell (<td>) at the first position of the "new" <tr> element:
+                let cell1 = row.insertCell();
+                let cell2 = row.insertCell();
+                let cell3 = row.insertCell();
+                let cell4 = row.insertCell();
+                let cell5 = row.insertCell();
+                let cell6 = row.insertCell();
+                let cell7 = row.insertCell();
+                let cell8 = row.insertCell();
+
+                // Add some bold text in the new cell:
+                cell1.innerHTML = "<b>Name</b>";
+                cell2.innerHTML = "<b>Hostname</b>";
+                cell3.innerHTML = "<b>ASM Leg</b>";
+                cell4.innerHTML = "<b>ASM Status</b>";
+                cell5.innerHTML = "<b>ASM Availability</b>";
+                cell6.innerHTML = "<b>LB State</b>";
+                cell7.innerHTML = "<b>LB Leg</b>";
+                cell8.innerHTML = "<b>Retry</b>";
+
+
+                for (server of serverList) {
+                    if (server.LBName == currentLB) {
+                        let row = table.insertRow();
+                        let cell1 = row.insertCell();
+                        let cell2 = row.insertCell();
+                        let cell3 = row.insertCell();
+                        let cell4 = row.insertCell();
+                        let cell5 = row.insertCell();
+                        let cell6 = row.insertCell();
+                        let cell7 = row.insertCell();
+                        let cellbtn = row.insertCell();
+                        cell1.innerHTML = server.name;
+                        cell2.innerHTML = server.hostname + ":" + server.port;
+                        if (server.leg) {
+                            cell3.innerHTML = server.leg;
+                        } else {
+                            cell3.innerHTML = server.response;
+                        }
+                        cell4.innerHTML = server.status;
+                        cell5.innerHTML = server.availability;
+                        cell6.innerHTML = server.state;
+                        cell7.innerHTML = server.servicegroupname.split('-')[2];
+                        let refButton = document.createElement("button");
+                        refButton.textContent = "refresh";
+                        refButton.type = "button";
+                        refButton.setAttribute('data-server-name', server.name);
+                        refButton.setAttribute('data-server-hostname', server.hostname);
+                        refButton.setAttribute('data-server-endpoint', server.endpoint);
+                        refButton.setAttribute('data-server-port', server.port);
+                        refButton.onclick = individualRefresh;
+
+                        if (server.leg == "querying...") {
+                            row.className = "table-warning"
+                            refButton.classList = "btn btn-outline-warning";
+                            refButton.textContent = "retry";
+                        } else if (server.response == "connection error, status:0") {
+                            row.classList = "table-danger";
+                            refButton.classList = "btn btn-danger";
+                            refButton.textContent = "retry";
+                        } else if (server.state == "DOWN") {
+                            row.classList = "table-info";
+                            refButton.classList = "btn btn-info";
+                            refButton.textContent = "nothing";
+                        } else {
+                            row.classList = "table-success";
+                            refButton.classList = "btn btn-success";
+                            refButton.textContent = "refresh";
+                        }
+                        cellbtn.appendChild(refButton);
+                    }
+                }
+                multiTableDiv.appendChild(table);
+
+            }
         }
 
-        function onlyUnique(value, index, self) { 
+        function onlyUnique(value, index, self) {
             return self.indexOf(value) === index;
         }
 
@@ -199,27 +284,29 @@
             for (env of envTypeList) {
                 newList.appendChild(new Option(env.envname, env.envname));
             }
-            newList.addEventListener('change', function(){
+            newList.addEventListener('change', function () {
                 itemtoKill = document.querySelector('#pickSubEnvBtn');
-                if(itemtoKill){itemtoKill.parentNode.removeChild(itemtoKill);};
+                if (itemtoKill) { itemtoKill.parentNode.removeChild(itemtoKill); };
                 itemtoKill = document.querySelector('#dropDownSubEnv');
-                if(itemtoKill){itemtoKill.parentNode.removeChild(itemtoKill);};
+                if (itemtoKill) { itemtoKill.parentNode.removeChild(itemtoKill); };
                 serverList = [];
                 drawTable();
+                drawMultiTables();
             })
             dropDownDivEnvType.appendChild(newList);
 
             let pickEnvTypeBtn = document.createElement("button");
             pickEnvTypeBtn.textContent = "Select";
             pickEnvTypeBtn.type = "button";
-            pickEnvTypeBtn.classList= "btn-primary btn-block";
+            pickEnvTypeBtn.classList = "btn-primary btn-block";
             pickEnvTypeBtn.addEventListener('click', function () {
                 itemtoKill = document.querySelector('#pickSubEnvBtn');
-                if(itemtoKill){itemtoKill.parentNode.removeChild(itemtoKill);};
+                if (itemtoKill) { itemtoKill.parentNode.removeChild(itemtoKill); };
                 itemtoKill = document.querySelector('#dropDownSubEnv');
-                if(itemtoKill){itemtoKill.parentNode.removeChild(itemtoKill);};
+                if (itemtoKill) { itemtoKill.parentNode.removeChild(itemtoKill); };
                 serverList = [];
                 drawTable();
+                drawMultiTables();
                 pickedEnvType(newList.value);
             });
             dropDownDivEnvType.appendChild(pickEnvTypeBtn);
@@ -250,7 +337,7 @@
             dropDownDivSubEnv = document.querySelector('#dropDownDivSubEnv');
             let newList = document.createElement("select");
             let tempEnvList = [];
-            for (item of _inList){
+            for (item of _inList) {
                 tempEnvList.push(item.splitEnvName);
             }
             //let tempEnvList = _inList.filter((elem, index, self) => self.findIndex((t) => { return (t.x === elem.x && t.y === elem.y) }) === index)
@@ -265,7 +352,7 @@
             pickSubEnvBtn.textContent = "Select";
             pickSubEnvBtn.id = "pickSubEnvBtn"
             pickSubEnvBtn.type = "button";
-            pickSubEnvBtn.classList= "btn-primary btn-block";
+            pickSubEnvBtn.classList = "btn-primary btn-block";
             pickSubEnvBtn.addEventListener('click', function () {
                 getServerListFromSubLBList(newList.value, subLBList, _envDetails);
             });
@@ -350,6 +437,7 @@
 
             serverList = lbServerList;
             drawTable();
+            drawMultiTables();
             requestAllServerDetails();
 
         }
@@ -364,9 +452,11 @@
 
         function individualRefresh(e) {
             for (let server of serverList) {
-                if (server.name == e.target.attributes['data-server-name'].value && server.hostname == e.target.attributes['data-server-hostname'].value) {
+                //if (server.name == e.target.attributes['data-server-name'].value && server.hostname == e.target.attributes['data-server-hostname'].value) {
+                if (server.port == e.target.attributes['data-server-port'].value && server.hostname == e.target.attributes['data-server-hostname'].value) {
                     server.leg = "querying...";
                     drawTable();
+                    drawMultiTables();
                     getServerDetails(server);
                 }
             }
@@ -423,6 +513,7 @@
                 }
             }
             drawTable();
+            drawMultiTables();
         }
 
         class Server {
