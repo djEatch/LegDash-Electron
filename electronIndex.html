@@ -44,6 +44,11 @@
                 <button id="refreshButton" class="btn btn-primary btn-block">refresh all</button>
             </div>
         </div>
+        <div class="row">
+            <div class="table-responsive" id="multiTableDiv">
+
+            </div>
+        </div>
 
         <!-- <div class="row">
             <div class="col-md-12">
@@ -71,6 +76,8 @@
 
         // const fudgeButton = document.querySelector('#envPickedButton');
         // fudgeButton.addEventListener("click", fudgePick);
+
+        const multiTableDiv = document.querySelector('#multiTableDiv');
 
         function refresh(e) {
             drawTable();
@@ -155,6 +162,30 @@
             }
         }
 
+        function drawMultiTables(){
+
+            let tempLBList = []
+            for (server of serverList){
+                tempLBList.push(server.LBName);
+            }
+            tempLBList = tempLBList.filter(onlyUnique);
+            console.log(tempLBList);
+            // multiTableDiv.innerHTML = "";
+            // let tables =[];
+            // let table = document.createElement("table");
+            // let row = table.insertRow();
+            // let cell1 = row.insertCell();
+            // let cell2 = row.insertCell();
+            // cell1.innerHTML = "BLAH"
+            // cell2.innerHTML = "BLAH2"
+            // multiTableDiv.appendChild(table);
+            // tables.push(document.createElement("button"));
+        }
+
+        function onlyUnique(value, index, self) { 
+            return self.indexOf(value) === index;
+        }
+
         ipcRenderer.on('updateEnvTypeList', function (e, _envTypeData) {
             updateEnvTypeList(_envTypeData);
         })
@@ -218,10 +249,14 @@
         function setupSubEnvDropDown(_inList, _envDetails) {
             dropDownDivSubEnv = document.querySelector('#dropDownDivSubEnv');
             let newList = document.createElement("select");
-
-            let tempEnvList = _inList.filter((elem, index, self) => self.findIndex((t) => { return (t.x === elem.x && t.y === elem.y) }) === index)
+            let tempEnvList = [];
+            for (item of _inList){
+                tempEnvList.push(item.splitEnvName);
+            }
+            //let tempEnvList = _inList.filter((elem, index, self) => self.findIndex((t) => { return (t.x === elem.x && t.y === elem.y) }) === index)
+            tempEnvList = tempEnvList.filter(onlyUnique);
             for (env of tempEnvList) {
-                newList.appendChild(new Option(env.splitEnvName, env.splitEnvName));
+                newList.appendChild(new Option(env, env));
             }
             dropDownDivSubEnv.appendChild(newList);
             newList.id = "dropDownSubEnv"
@@ -279,6 +314,7 @@
                 let subLBResponse = JSON.parse(data)
                 let subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
                 for (subLBServer of subLBServerList) {
+                    subLBServer.LBName = _subLB.name;
                     lbServerList.push(subLBServer);
                 }
                 console.log(lbServerList.length);
