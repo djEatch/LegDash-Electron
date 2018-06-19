@@ -1,4 +1,4 @@
-const {app, BrowserWindow, Menu} = require('electron')
+const {app, BrowserWindow, Menu, ipcMain} = require('electron')
 const path = require('path')
 const url = require('url')
 const fs = require("fs");
@@ -38,8 +38,24 @@ app.on('ready', function(){
 
   const winMenu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(winMenu);
-
 });
+
+ipcMain.on('popup', (e,server) => {
+  console.log('triggered');
+  pop = new BrowserWindow({show: false, width: 800, height: 600});
+  pop.loadURL(url.format({
+    pathname: path.join(__dirname, 'electronPopup.html'),
+    protocol: 'file:',
+    slashes: true
+  }));
+
+  pop.once('ready-to-show', () => {
+    pop.webContents.send('showServerDetails',server);
+    pop.show()
+  })
+
+  
+})
 
 function getEnvTypeList(){
   envTypeList = [];
@@ -59,6 +75,7 @@ function getEnvTypeList(){
   win.webContents.send('updateEnvTypeList',envTypeList);
 
 }
+
 
 
 class Env{

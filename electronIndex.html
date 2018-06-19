@@ -23,13 +23,12 @@
             <div id="dropDownDivEnvType"></div>
             <div id="dropDownDivSubEnv"></div>
         </div>
-        <div class="row">
+        <!-- <div class="row">
             <div class="table-responsive">
                 <table id="serverTable" class="table table-light table-hover">
                     <thead class="thead-dark">
                         <td onclick="sortData('name','hostname')">Name</td>
                         <td onclick="sortData('hostname','name')">Hostname</td>
-                        <!-- <td>Endpoint</td> -->
                         <td onclick="sortData('leg','name')">Leg</td>
                         <td onclick="sortData('status','name')">Status</td>
                         <td onclick="sortData('availability','name')">Availability</td>
@@ -38,7 +37,7 @@
                     <tbody id="tableBody"></tbody>
                 </table>
             </div>
-        </div>
+        </div> -->
         <div class="row">
             <div class="col-md-12">
                 <button id="refreshButton" class="btn btn-primary btn-block">refresh all</button>
@@ -55,6 +54,26 @@
                 <button id="envPickedButton" class="btn btn-primary btn-block">FUDGE FT1</button>
             </div>
         </div> -->
+    </div>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    ...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -205,7 +224,7 @@
                 cell1.innerHTML = "<b>Name</b>";
                 cell2.innerHTML = "<b>Hostname</b>";
                 cell2.addEventListener('click', function () {
-                    sortData('name','hostname')
+                    sortData('name', 'hostname')
                 });
                 cell3.innerHTML = "<b>ASM Leg</b>";
                 cell4.innerHTML = "<b>ASM Status</b>";
@@ -230,6 +249,15 @@
                         let cellbtn = row.insertCell();
                         cell1.innerHTML = server.name;
                         cell2.innerHTML = server.hostname + ":" + server.port;
+                        cell2.setAttribute('data-server-name', server.name);
+                        cell2.setAttribute('data-server-hostname', server.hostname);
+                        cell2.setAttribute('data-server-endpoint', server.endpoint);
+                        cell2.setAttribute('data-server-port', server.port);
+                        cell2.onclick = showResponseDetails;
+                        // cell2.addEventListener('click',() => {
+                        //     console.log('clicked', server);
+                        //     //ipcRenderer.send('popup',server);
+                        // })
                         if (server.leg) {
                             cell3.innerHTML = server.leg;
                         } else {
@@ -240,7 +268,7 @@
                         cell6.innerHTML = server.state;
                         cell7.innerHTML = server.servicegroupname.split('-')[2];
                         cell8.innerHTML = server.responseTime;
-                        
+
 
                         let refButton = document.createElement("button");
                         refButton.textContent = "refresh";
@@ -273,6 +301,17 @@
                 }
                 multiTableDiv.appendChild(table);
 
+            }
+        }
+
+        function showResponseDetails(e) {
+            console.log(e);
+            for (let server of serverList) {
+                //if (server.name == e.target.attributes['data-server-name'].value && server.hostname == e.target.attributes['data-server-hostname'].value) {
+                if (server.port == e.target.attributes['data-server-port'].value && server.hostname == e.target.attributes['data-server-hostname'].value && server.name == e.target.attributes['data-server-name'].value) {
+                    console.log(server);
+                    ipcRenderer.send('popup', server);
+                }
             }
         }
 
@@ -466,7 +505,7 @@
                     server.leg = "querying...";
                     drawTable();
                     drawMultiTables();
-                    if(server.name == e.target.attributes['data-server-name'].value){
+                    if (server.name == e.target.attributes['data-server-name'].value) {
                         getServerDetails(server);
                     }
                 }
@@ -492,10 +531,10 @@
             xhr.onreadystatechange = function () {
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     var endTime = new Date();
-                    callback(xhr.responseText, id, endTime-startTime);
+                    callback(xhr.responseText, id, endTime - startTime);
                 }
                 if (xhr.readyState == 4 && xhr.status != 200) {
-                    callback("connection error, status:" + xhr.status, id, endTime-startTime);
+                    callback("connection error, status:" + xhr.status, id, endTime - startTime);
                 }
             }
         }
