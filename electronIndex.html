@@ -99,7 +99,7 @@
         const multiTableDiv = document.querySelector('#multiTableDiv');
 
         function refresh(e) {
-            drawTable();
+            //drawTable();
             drawMultiTables();
             requestAllServerDetails();
             //ipcRenderer.send('refreshList'); <---- this is for old list in text file....
@@ -130,7 +130,7 @@
                 }
                 return 0;
             });
-            drawTable();
+            //drawTable();
             drawMultiTables();
         }
 
@@ -305,11 +305,11 @@
         }
 
         function showResponseDetails(e) {
-            console.log(e);
             for (let server of serverList) {
                 //if (server.name == e.target.attributes['data-server-name'].value && server.hostname == e.target.attributes['data-server-hostname'].value) {
                 if (server.port == e.target.attributes['data-server-port'].value && server.hostname == e.target.attributes['data-server-hostname'].value && server.name == e.target.attributes['data-server-name'].value) {
-                    console.log(server);
+                    // let modal = document.querySelector('#exampleModal');
+                    // $('#exampleModal').modal('show');
                     ipcRenderer.send('popup', server);
                 }
             }
@@ -338,7 +338,7 @@
                 itemtoKill = document.querySelector('#dropDownSubEnv');
                 if (itemtoKill) { itemtoKill.parentNode.removeChild(itemtoKill); };
                 serverList = [];
-                drawTable();
+                //drawTable();
                 drawMultiTables();
             })
             dropDownDivEnvType.appendChild(newList);
@@ -353,7 +353,7 @@
                 itemtoKill = document.querySelector('#dropDownSubEnv');
                 if (itemtoKill) { itemtoKill.parentNode.removeChild(itemtoKill); };
                 serverList = [];
-                drawTable();
+                //drawTable();
                 drawMultiTables();
                 pickedEnvType(newList.value);
             });
@@ -484,7 +484,7 @@
             }
 
             serverList = lbServerList;
-            drawTable();
+            //drawTable();
             drawMultiTables();
             requestAllServerDetails();
 
@@ -503,7 +503,7 @@
                 //if (server.name == e.target.attributes['data-server-name'].value && server.hostname == e.target.attributes['data-server-hostname'].value) {
                 if (server.port == e.target.attributes['data-server-port'].value && server.hostname == e.target.attributes['data-server-hostname'].value) {
                     server.leg = "querying...";
-                    drawTable();
+                    //drawTable();
                     drawMultiTables();
                     if (server.name == e.target.attributes['data-server-name'].value) {
                         getServerDetails(server);
@@ -565,7 +565,7 @@
                     }
                 }
             }
-            drawTable();
+            //drawTable();
             drawMultiTables();
         }
 
