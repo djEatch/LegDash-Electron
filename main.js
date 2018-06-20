@@ -42,7 +42,7 @@ app.on('ready', function(){
 
 ipcMain.on('popup', (e,server) => {
   console.log('triggered');
-  pop = new BrowserWindow({show: false, width: 800, height: 600});
+  pop = new BrowserWindow({parent: win, modal: true, show: false,transparent: true, width: 400, height: 300});//{show: false, width: 800, height: 600}
   pop.loadURL(url.format({
     pathname: path.join(__dirname, 'electronPopup.html'),
     protocol: 'file:',

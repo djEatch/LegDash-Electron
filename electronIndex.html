@@ -23,21 +23,6 @@
             <div id="dropDownDivEnvType"></div>
             <div id="dropDownDivSubEnv"></div>
         </div>
-        <!-- <div class="row">
-            <div class="table-responsive">
-                <table id="serverTable" class="table table-light table-hover">
-                    <thead class="thead-dark">
-                        <td onclick="sortData('name','hostname')">Name</td>
-                        <td onclick="sortData('hostname','name')">Hostname</td>
-                        <td onclick="sortData('leg','name')">Leg</td>
-                        <td onclick="sortData('status','name')">Status</td>
-                        <td onclick="sortData('availability','name')">Availability</td>
-                        <td>Retry</td>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
-        </div> -->
         <div class="row">
             <div class="col-md-12">
                 <button id="refreshButton" class="btn btn-primary btn-block">refresh all</button>
@@ -94,7 +79,11 @@
         refreshButton.addEventListener("click", refresh);
 
         // const fudgeButton = document.querySelector('#envPickedButton');
-        // fudgeButton.addEventListener("click", fudgePick);
+        // fudgeButton.addEventListener("click", fudgeModal);
+
+        // function fudgeModal(){
+        //     ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
+        // }
 
         const multiTableDiv = document.querySelector('#multiTableDiv');
 
@@ -413,18 +402,19 @@
                 let masterLBResponse = JSON.parse(data)
                 subLBList = masterLBResponse.lbvserver;
                 for (subLB of subLBList) {
+                    console.log(subLB);
                     subtext = subLB.name.split('-');
-                    subLB.splitEnvName = subtext[0];
-                    subLB.splitServerType = subtext[1];
-                    subLB.splitLeg = subtext[2];
+                    subLB.splitEnvName = subtext[6].substr(-3);
+                    subLB.splitServerType = subtext[4];
+                    subLB.splitLeg = subtext[5];
                 }
-
+                setupSubEnvDropDown(subLBList, _envDetails);
             }
             catch (err) {
                 console.log('BAD Response from Master LB');
                 console.log(err);
             }
-            setupSubEnvDropDown(subLBList, _envDetails);
+
         }
 
         function getServerListFromSubLBList(_selectedEnvName, _subLBList, _envDetails) {

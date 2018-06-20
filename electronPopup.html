@@ -21,10 +21,23 @@
     <div id="responseDiv">
 
     </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <button id="close-btn" class="btn btn-primary btn-block">Dismiss</button>
+            </div>
+        </div>
+
     <script>
 
         const electron = require('electron');
         const { ipcRenderer } = electron;
+        const remote = require('electron').remote;
+
+        document.getElementById("close-btn").addEventListener("click", function (e) {
+            var window = remote.getCurrentWindow();
+            window.close();
+        });
 
         ipcRenderer.on('showServerDetails', function (e, server) {
             console.log(server);
