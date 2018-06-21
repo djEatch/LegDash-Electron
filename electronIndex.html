@@ -123,68 +123,23 @@
             drawMultiTables();
         }
 
-        function drawTable() {
-            serverTable.innerHTML = "";
-            let i = 0
-            for (let server of serverList) {
-                let row = serverTable.insertRow(i);
-                let cell1 = row.insertCell();
-                let cell2 = row.insertCell();
-                //let cell3 = row.insertCell(2);
-                let cell4 = row.insertCell();
-                let cell5 = row.insertCell();
-                let cell6 = row.insertCell();
-                let cellbtn = row.insertCell();
-                cell1.innerHTML = server.name;
-                cell2.innerHTML = server.hostname + ":" + server.port;
-                //cell3.innerHTML = server.endpoint;
-                if (server.leg) {
-                    cell4.innerHTML = server.leg;
-                } else {
-                    cell4.innerHTML = server.response;
-                }
-                cell5.innerHTML = server.status;
-                cell6.innerHTML = server.availability;
-                let refButton = document.createElement("button");
-                refButton.textContent = "refresh";
-                refButton.type = "button";
-                refButton.setAttribute('data-server-name', server.name);
-                refButton.setAttribute('data-server-hostname', server.hostname);
-                refButton.setAttribute('data-server-endpoint', server.endpoint);
-                refButton.setAttribute('data-server-port', server.port);
-                refButton.onclick = individualRefresh;
-
-                if (server.leg == "querying...") {
-                    row.className = "table-warning"
-                    refButton.classList = "btn btn-outline-warning";
-                    refButton.textContent = "retry";
-                } else if (server.response == "connection error, status:0") {
-                    row.classList = "table-danger";
-                    refButton.classList = "btn btn-danger";
-                    refButton.textContent = "retry";
-                } else {
-                    row.classList = "table-success";
-                    refButton.classList = "btn btn-success";
-                    refButton.textContent = "refresh";
-                }
-                cellbtn.appendChild(refButton);
-                i++;
-            }
-        }
-
         function drawMultiTables() {
 
             let tempLBList = []
-            for (server of serverList) {
-                tempLBList.push(server.LBName);
-            }
-            tempLBList = tempLBList.filter(onlyUnique);
-            tempLBList = tempLBList.sort();
+            // for (server of serverList) {
+            //     tempLBList.push(server.LBName);
+            // }
+            // tempLBList = tempLBList.filter(onlyUnique);
+            // tempLBList = tempLBList.sort();
+
+            tempLBList = subLBList;
+            tempLBList.sort(function(a,b){ x = a.name; y=b.name; if(x<y){return -1}else if (x>y){ return 1} else return 0});
+
             multiTableDiv.innerHTML = "";
 
             for (currentLB of tempLBList) {
                 var h = document.createElement("H2");                // Create a <h1> element
-                var t = document.createTextNode(currentLB);     // Create a text node
+                var t = document.createTextNode(currentLB.name + " - " + currentLB.state);     // Create a text node
                 h.appendChild(t);  // Append the text to <h1>
                 multiTableDiv.appendChild(h);
 
@@ -225,7 +180,7 @@
 
 
                 for (server of serverList) {
-                    if (server.LBName == currentLB) {
+                    if (server.LBName == currentLB.name) {
                         let row = table.insertRow();
                         let cell1 = row.insertCell();
                         let cell2 = row.insertCell();
@@ -440,6 +395,7 @@
                 let subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
                 for (subLBServer of subLBServerList) {
                     subLBServer.LBName = _subLB.name;
+                    subLBServer.MLBState = subLBResponse.lbvserver[0].state;
                     lbServerList.push(subLBServer);
                 }
                 console.log(lbServerList.length);
