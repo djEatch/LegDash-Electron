@@ -20,12 +20,13 @@
 <body>
     <div class="container-fluid">
         <div class="row">
-            <div id="dropDownDivEnvType"></div>
-            <div id="dropDownDivSubEnv"></div>
+            <div class="col-md-3" id="dropDownDivEnvType"></div>
+            <div class="col-md-3" id="btnDivEnvType"></div>
+            <div class="col-md-3" id="dropDownDivSubEnv"></div>
+            <div class="col-md-3" id="btnDivSubEnv"></div>
         </div>
         <div class="row">
             <div class="col-md-12">
-                <button id="refreshButton" class="btn btn-primary btn-block">refresh all</button>
             </div>
         </div>
         <div class="row">
@@ -33,7 +34,11 @@
 
             </div>
         </div>
-
+        <div class="row">
+            <div class="col-md-12">
+                <button id="refreshButton" class="btn btn-primary btn-block">refresh all</button>
+            </div>
+        </div>
         <!-- <div class="row">
             <div class="col-md-12">
                 <button id="envPickedButton" class="btn btn-primary btn-block">FUDGE FT1</button>
@@ -137,8 +142,10 @@
 
             multiTableDiv.innerHTML = "";
 
+            if (serverList.length < 1) { return; }
+
             for (currentLB of tempLBList) {
-                var h = document.createElement("H2");                // Create a <h1> element
+                var h = document.createElement("H4");                // Create a <h1> element
                 var t = document.createTextNode(currentLB.name + " - " + currentLB.state);     // Create a text node
                 h.appendChild(t);  // Append the text to <h1>
                 multiTableDiv.appendChild(h);
@@ -229,25 +236,6 @@
                         refButton.classList = "btn btn-" + rowStyle.colour;
                         refButton.textContent = rowStyle.text
 
-                        // if (server.ASMleg == "querying...") {
-                        //     row.className = "table-warning"
-                        //     refButton.classList = "btn btn-outline-warning";
-                        //     refButton.textContent = "retry";
-                        // } else if (server.response == "connection error, status:0") {
-                        //     row.classList = "table-danger";
-                        //     refButton.classList = "btn btn-danger";
-                        //     refButton.textContent = "retry";
-                        // } else if (server.state == "DOWN") {
-                        //     row.classList = "table-info";
-                        //     refButton.classList = "btn btn-info";
-                        //     refButton.textContent = "nothing";
-                        // } else {
-                        //     row.classList = "table-success";
-                        //     refButton.classList = "btn btn-success";
-                        //     refButton.textContent = "refresh";
-                        // }
-
-
                         cellbtn.appendChild(refButton);
                     }
                 }
@@ -264,8 +252,8 @@
                 if (server.availability == "true") {
                     if (server.state == "UP") {
                         return { colour: "success", text: "refresh" };
-                    } else if (server.state != "UP") {
-                        return { colour: "warning", text: "refresh" };
+                    } else if (server.state == "DOWN") {
+                        return { colour: "danger", text: "refresh" };
                     } else {
                         return { colour: "warning", text: "refresh" };
                     }
@@ -288,24 +276,6 @@
                 }
 
             }
-
-            // if (server.availability == "true") {
-            //     if (server.state == "UP") {
-            //         return { colour: "success", text: "refresh" };
-            //     } else if (server.state != "UP") {
-            //         return { colour: "warning", text: "refresh" };
-            //     }
-            // } else if (server.availability != "true") {
-            //     if (server.state == "UP") {
-            //         return { colour: "warning", text: "retry" };
-            //     } else if (server.state == "DOWN") {
-            //         return { colour: "danger", text: "retry" };
-            //     } else {
-            //         return { colour: "warning", text: "retry" };
-            //     }
-            // } else {
-            //     return { colour: "warning", text: "refresh" };
-            // }
 
         }
 
@@ -346,12 +316,14 @@
                 //drawTable();
                 drawMultiTables();
             })
+            newList.classList = "w-100 btn btn-secondary dropdown-toggle";
             dropDownDivEnvType.appendChild(newList);
 
+            btnDivEnvType = document.querySelector('#btnDivEnvType');
             let pickEnvTypeBtn = document.createElement("button");
             pickEnvTypeBtn.textContent = "Select";
             pickEnvTypeBtn.type = "button";
-            pickEnvTypeBtn.classList = "btn-primary btn-block";
+            pickEnvTypeBtn.classList = "btn btn-primary btn-block";
             pickEnvTypeBtn.addEventListener('click', function () {
                 itemtoKill = document.querySelector('#pickSubEnvBtn');
                 if (itemtoKill) { itemtoKill.parentNode.removeChild(itemtoKill); };
@@ -362,7 +334,7 @@
                 drawMultiTables();
                 pickedEnvType(newList.value);
             });
-            dropDownDivEnvType.appendChild(pickEnvTypeBtn);
+            btnDivEnvType.appendChild(pickEnvTypeBtn);
         }
 
         function pickedEnvType(_envType) {
@@ -398,18 +370,20 @@
             for (env of tempEnvList) {
                 newList.appendChild(new Option(env, env));
             }
+            newList.classList = "w-100 btn btn-secondary dropdown-toggle";
             dropDownDivSubEnv.appendChild(newList);
             newList.id = "dropDownSubEnv"
 
+            btnDivSubEnv = document.querySelector('#btnDivSubEnv');
             let pickSubEnvBtn = document.createElement("button");
             pickSubEnvBtn.textContent = "Select";
             pickSubEnvBtn.id = "pickSubEnvBtn"
             pickSubEnvBtn.type = "button";
-            pickSubEnvBtn.classList = "btn-primary btn-block";
+            pickSubEnvBtn.classList = "btn btn-primary btn-block";
             pickSubEnvBtn.addEventListener('click', function () {
                 getServerListFromSubLBList(newList.value, subLBList, _envDetails);
             });
-            dropDownDivSubEnv.appendChild(pickSubEnvBtn);
+            btnDivSubEnv.appendChild(pickSubEnvBtn);
         }
 
         function gotSubLBList(data, _envDetails) {
