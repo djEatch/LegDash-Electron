@@ -14,7 +14,7 @@ let envTypeList = [];
 app.on('ready', function(){
 
     // Create the browser window.
-  win = new BrowserWindow({show: false, width: 800, height: 600})
+  win = new BrowserWindow({show: false, width: 800, height: 600,webSecurity:true})
 
   // and load the index.html of the app.
   win.loadURL(url.format({

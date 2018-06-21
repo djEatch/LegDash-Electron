@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "package": "electron-packager . LegDash --overwrite --platform=win32 --arch=x64 --prune=true --out=release-builds --version-string.CompanyName=DJE --version-string.FileDescription=DJE --version-string.ProductName=\"Leg Dashboard Electron App\"",
+    "package": "electron-packager . LegDash2 --overwrite --platform=win32 --arch=x64 --prune=true --out=release-builds --version-string.CompanyName=DJE --version-string.FileDescription=DJE --version-string.ProductName=\"Leg Dashboard Electron App\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
