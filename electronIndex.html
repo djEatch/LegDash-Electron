@@ -133,7 +133,7 @@
             // tempLBList = tempLBList.sort();
 
             tempLBList = subLBList;
-            tempLBList.sort(function(a,b){ x = a.name; y=b.name; if(x<y){return -1}else if (x>y){ return 1} else return 0});
+            tempLBList.sort(function (a, b) { x = a.name; y = b.name; if (x < y) { return -1 } else if (x > y) { return 1 } else return 0 });
 
             multiTableDiv.innerHTML = "";
 
@@ -202,15 +202,15 @@
                         //     console.log('clicked', server);
                         //     //ipcRenderer.send('popup',server);
                         // })
-                        if (server.leg) {
-                            cell3.innerHTML = server.leg;
+                        if (server.ASMleg) {
+                            cell3.innerHTML = server.ASMleg;
                         } else {
                             cell3.innerHTML = server.response;
                         }
                         cell4.innerHTML = server.status;
                         cell5.innerHTML = server.availability;
                         cell6.innerHTML = server.state;
-                        cell7.innerHTML = server.servicegroupname.split('-')[2];
+                        cell7.innerHTML = server.LBLeg;
                         cell8.innerHTML = server.responseTime;
 
 
@@ -223,29 +223,90 @@
                         refButton.setAttribute('data-server-port', server.port);
                         refButton.onclick = individualRefresh;
 
-                        if (server.leg == "querying...") {
-                            row.className = "table-warning"
-                            refButton.classList = "btn btn-outline-warning";
-                            refButton.textContent = "retry";
-                        } else if (server.response == "connection error, status:0") {
-                            row.classList = "table-danger";
-                            refButton.classList = "btn btn-danger";
-                            refButton.textContent = "retry";
-                        } else if (server.state == "DOWN") {
-                            row.classList = "table-info";
-                            refButton.classList = "btn btn-info";
-                            refButton.textContent = "nothing";
-                        } else {
-                            row.classList = "table-success";
-                            refButton.classList = "btn btn-success";
-                            refButton.textContent = "refresh";
-                        }
+                        let rowStyle = getRowStyle(server);
+
+                        row.className = "table-" + rowStyle.colour;
+                        refButton.classList = "btn btn-" + rowStyle.colour;
+                        refButton.textContent = rowStyle.text
+
+                        // if (server.ASMleg == "querying...") {
+                        //     row.className = "table-warning"
+                        //     refButton.classList = "btn btn-outline-warning";
+                        //     refButton.textContent = "retry";
+                        // } else if (server.response == "connection error, status:0") {
+                        //     row.classList = "table-danger";
+                        //     refButton.classList = "btn btn-danger";
+                        //     refButton.textContent = "retry";
+                        // } else if (server.state == "DOWN") {
+                        //     row.classList = "table-info";
+                        //     refButton.classList = "btn btn-info";
+                        //     refButton.textContent = "nothing";
+                        // } else {
+                        //     row.classList = "table-success";
+                        //     refButton.classList = "btn btn-success";
+                        //     refButton.textContent = "refresh";
+                        // }
+
+
                         cellbtn.appendChild(refButton);
                     }
                 }
                 multiTableDiv.appendChild(table);
 
             }
+        }
+
+        function getRowStyle(server) {
+
+            if (server.ASMleg == "querying...") { //no results yet as it's querying
+                return { colour: "outline-warning", text: "retry" };
+            } else if (server.ASMleg.includes(server.LBLeg)) { // matching LB ASMleg to ASM Leg
+                if (server.availability == "true") {
+                    if (server.state == "UP") {
+                        return { colour: "success", text: "refresh" };
+                    } else if (server.state != "UP") {
+                        return { colour: "warning", text: "refresh" };
+                    } else {
+                        return { colour: "warning", text: "refresh" };
+                    }
+                } else if (server.availability != "true") {
+                    if (server.state == "UP") {
+                        return { colour: "warning", text: "refresh" };
+                    } else if (server.state == "DOWN") {
+                        return { colour: "danger", text: "refresh" };
+                    } else {
+                        return { colour: "warning", text: "refresh" };
+                    }
+                }
+            } else { //this server is not in this leg.....
+
+                //if LB says server is up then we have a problem here
+                if (server.state == "UP") {
+                    return { colour: "danger", text: "refresh" };
+                } else {
+                    return { colour: "secondary", text: "refresh" };
+                }
+
+            }
+
+            // if (server.availability == "true") {
+            //     if (server.state == "UP") {
+            //         return { colour: "success", text: "refresh" };
+            //     } else if (server.state != "UP") {
+            //         return { colour: "warning", text: "refresh" };
+            //     }
+            // } else if (server.availability != "true") {
+            //     if (server.state == "UP") {
+            //         return { colour: "warning", text: "retry" };
+            //     } else if (server.state == "DOWN") {
+            //         return { colour: "danger", text: "retry" };
+            //     } else {
+            //         return { colour: "warning", text: "retry" };
+            //     }
+            // } else {
+            //     return { colour: "warning", text: "refresh" };
+            // }
+
         }
 
         function showResponseDetails(e) {
@@ -357,7 +418,6 @@
                 let masterLBResponse = JSON.parse(data)
                 subLBList = masterLBResponse.lbvserver;
                 for (subLB of subLBList) {
-                    console.log(subLB);
                     subtext = subLB.name.split('-');
                     subLB.splitEnvName = subtext[6].substr(-3);
                     subLB.splitServerType = subtext[4];
@@ -424,9 +484,10 @@
                 lbServer.port = splitTextQuestion[2];
                 lbServer.endpoint = "/application-status-monitor/rest/applicationstatusmonitor/status.json";
                 lbServer.response = "querying...";
-                lbServer.leg = null;
+                lbServer.ASMleg = "querying...";
                 lbServer.availability = null;
                 lbServer.status = null;
+                lbServer.LBLeg = lbServer.servicegroupname.split('-')[2];
             }
 
             serverList = lbServerList;
@@ -439,7 +500,7 @@
 
         function requestAllServerDetails() {
             for (let server of serverList) {
-                server.leg = "querying...";
+                server.ASMleg = "querying...";
                 getServerDetails(server);
             }
         }
@@ -448,7 +509,7 @@
             for (let server of serverList) {
                 //if (server.name == e.target.attributes['data-server-name'].value && server.hostname == e.target.attributes['data-server-hostname'].value) {
                 if (server.port == e.target.attributes['data-server-port'].value && server.hostname == e.target.attributes['data-server-hostname'].value) {
-                    server.leg = "querying...";
+                    server.ASMleg = "querying...";
                     //drawTable();
                     drawMultiTables();
                     if (server.name == e.target.attributes['data-server-name'].value) {
@@ -492,10 +553,10 @@
                     server.response = data;
                     server.responseTime = timing;
                     try {
-                        server.leg = JSON.parse(data).status.label;
+                        server.ASMleg = JSON.parse(data).status.label;
                         //break;
                     } catch (e) {
-                        server.leg = data;
+                        server.ASMleg = data;
                     }
                     try {
                         server.status = JSON.parse(data).status.currentStatus;
@@ -523,7 +584,7 @@
                 this.port = port;
                 this.endpoint = endpoint;
                 this.response = null;
-                this.leg = null;
+                this.ASMleg = null;
                 this.availability = null;
                 this.status = null;
             }
