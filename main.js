@@ -1,85 +1,105 @@
-const {app, BrowserWindow, Menu, ipcMain} = require('electron')
-const path = require('path')
-const url = require('url')
+const { app, BrowserWindow, Menu, ipcMain } = require("electron");
+const path = require("path");
+const url = require("url");
 const fs = require("fs");
-
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
 
-let envFile = __dirname + '/EnvTypeList.txt';
+let envFile = __dirname + "/EnvTypeList.txt";
 let envTypeList = [];
 
-app.on('ready', function(){
-
-    // Create the browser window.
-  win = new BrowserWindow({show: false, width: 800, height: 600,webSecurity:true})
+app.on("ready", function() {
+  // Create the browser window.
+  win = new BrowserWindow({
+    show: false,
+    width: 800,
+    height: 600,
+    webSecurity: true// ,
+    // webPreferences: {
+    //   //nodeIntegration: false
+    //   //preload: path.join(__dirname, 'electronIndex.js'),
+    //   contextIsolation: true
+    // }
+  });
 
   // and load the index.html of the app.
-  win.loadURL(url.format({
-    pathname: path.join(__dirname, 'electronIndex.html'),
-    protocol: 'file:',
-    slashes: true
-  }))
+  win.loadURL(
+    url.format({
+      pathname: path.join(__dirname, "electronIndex.html"),
+      protocol: "file:",
+      slashes: true
+    })
+  );
 
   // Emitted when the window is closed.
-  win.on('closed', () => {
+  win.on("closed", () => {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
-    win = null
-  })
+    win = null;
+  });
 
-  win.once('ready-to-show', () => {
+  win.once("ready-to-show", () => {
     getEnvTypeList();
-    win.show()
-  })
+    win.show();
+  });
 
   const winMenu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(winMenu);
 });
 
-ipcMain.on('popup', (e,server) => {
-  console.log('triggered');
-  pop = new BrowserWindow({parent: win, modal: true, show: false,transparent: true, width: 700, height: 400});//{show: false, width: 800, height: 600}
-  pop.loadURL(url.format({
-    pathname: path.join(__dirname, 'electronPopup.html'),
-    protocol: 'file:',
-    slashes: true
-  }));
+ipcMain.on("popup", (e, server) => {
+  console.log("triggered");
+  pop = new BrowserWindow({
+    parent: win,
+    modal: true,
+    show: false,
+    transparent: true,
+    width: 700,
+    height: 400
+  }); //{show: false, width: 800, height: 600}
+  pop.loadURL(
+    url.format({
+      pathname: path.join(__dirname, "electronPopup.html"),
+      protocol: "file:",
+      slashes: true
+    })
+  );
 
-  pop.once('ready-to-show', () => {
-    pop.webContents.send('showServerDetails',server);
-    pop.show()
-  })
+  pop.once("ready-to-show", () => {
+    pop.webContents.send("showServerDetails", server);
+    pop.show();
+  });
+});
 
-  
-})
-
-function getEnvTypeList(){
+function getEnvTypeList() {
   envTypeList = [];
   var data = fs.readFileSync(envFile).toString();
 
   let allTextLines = data.split(/\r\n|\n/);
-  let headers = allTextLines[0].split(',');
+  let headers = allTextLines[0].split(",");
 
-  for ( let i = 1; i < allTextLines.length; i++) {
-      // split content based on comma
-      let data = allTextLines[i].split(',');
-      if (data.length == headers.length) {
-          let myEnv = new Env(data[0].replace(/['"]+/g, ''),data[1].replace(/['"]+/g, ''),data[2].replace(/['"]+/g, ''),data[3].replace(/['"]+/g, ''),data[4].replace(/['"]+/g, ''));
-          envTypeList.push(myEnv);
-      }
+  for (let i = 1; i < allTextLines.length; i++) {
+    // split content based on comma
+    let data = allTextLines[i].split(",");
+    if (data.length == headers.length) {
+      let myEnv = new Env(
+        data[0].replace(/['"]+/g, ""),
+        data[1].replace(/['"]+/g, ""),
+        data[2].replace(/['"]+/g, ""),
+        data[3].replace(/['"]+/g, ""),
+        data[4].replace(/['"]+/g, "")
+      );
+      envTypeList.push(myEnv);
+    }
   }
-  win.webContents.send('updateEnvTypeList',envTypeList);
-
+  win.webContents.send("updateEnvTypeList", envTypeList);
 }
 
-
-
-class Env{
-  constructor(envname, hostname, endpoint, username, password){
+class Env {
+  constructor(envname, hostname, endpoint, username, password) {
     this.envname = envname;
     this.hostname = hostname;
     this.endpoint = endpoint;
@@ -95,127 +115,123 @@ class Env{
 //app.on('ready', createWindow)
 
 // Quit when all windows are closed.
-app.on('window-all-closed', () => {
+app.on("window-all-closed", () => {
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit()
+  if (process.platform !== "darwin") {
+    app.quit();
   }
-})
+});
 
-app.on('activate', () => {
+app.on("activate", () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (win === null) {
-    createWindow()
+    createWindow();
   }
-})
-  
+});
 
 const template = [
   {
-    label: 'Edit',
-    submenu: [
-      {        role: 'copy'      },
-      {        role: 'selectall'      }
-    ]
+    label: "Edit",
+    submenu: [{ role: "copy" }, { role: "selectall" }]
   },
   {
-    label: 'View',
+    label: "View",
     submenu: [
       {
-        label: 'Reload',
-        accelerator: 'CmdOrCtrl+R',
-        click (item, focusedWindow) {
-          if (focusedWindow) focusedWindow.reload()
+        label: "Reload",
+        accelerator: "CmdOrCtrl+R",
+        click(item, focusedWindow) {
+          if (focusedWindow) focusedWindow.reload();
         }
       },
       {
-        label: 'Toggle Developer Tools',
-        accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
-        click (item, focusedWindow) {
-          if (focusedWindow) focusedWindow.webContents.toggleDevTools()
+        label: "Toggle Developer Tools",
+        accelerator:
+          process.platform === "darwin" ? "Alt+Command+I" : "Ctrl+Shift+I",
+        click(item, focusedWindow) {
+          if (focusedWindow) focusedWindow.webContents.toggleDevTools();
         }
       },
-      {        type: 'separator'      },
-      {        role: 'resetzoom'      },
-      {        role: 'zoomin'      },
-      {        role: 'zoomout'      },
-      {        type: 'separator'      },
-      {        role: 'togglefullscreen'      }
+      { type: "separator" },
+      { role: "resetzoom" },
+      { role: "zoomin" },
+      { role: "zoomout" },
+      { type: "separator" },
+      { role: "togglefullscreen" }
     ]
   },
   {
-    role: 'window',
-    submenu: [
-      {        role: 'minimize'      },
-      {        role: 'close'      }
-    ]
+    role: "window",
+    submenu: [{ role: "minimize" }, { role: "close" }]
   },
   {
-    role: 'help',
+    role: "help",
     submenu: [
       {
-        label: 'Learn More',
-        click () { require('electron').shell.openExternal('http://electron.atom.io') }
+        label: "Learn More",
+        click() {
+          require("electron").shell.openExternal("http://electron.atom.io");
+        }
       }
     ]
   }
-]
+];
 
-if (process.platform === 'darwin') {
-  const name = app.getName()
+if (process.platform === "darwin") {
+  const name = app.getName();
   template.unshift({
     label: name,
     submenu: [
-      {        role: 'about'      },
-      {        type: 'separator'      },
-      {        role: 'services', submenu: []},
-      {        type: 'separator'      },
-      {        role: 'hide'      },
-      {        role: 'hideothers'      },
-      {        role: 'unhide'      },
-      {        type: 'separator'      },
-      {        role: 'quit'      }
+      { role: "about" },
+      { type: "separator" },
+      { role: "services", submenu: [] },
+      { type: "separator" },
+      { role: "hide" },
+      { role: "hideothers" },
+      { role: "unhide" },
+      { type: "separator" },
+      { role: "quit" }
     ]
-  })
+  });
   // Edit menu.
   template[1].submenu.push(
-    {      type: 'separator'    },
-    {      label: 'Speech',
+    { type: "separator" },
+    {
+      label: "Speech",
       submenu: [
         {
-          role: 'startspeaking'
+          role: "startspeaking"
         },
         {
-          role: 'stopspeaking'
+          role: "stopspeaking"
         }
       ]
     }
-  )
+  );
   // Window menu.
   template[3].submenu = [
     {
-      label: 'Close',
-      accelerator: 'CmdOrCtrl+W',
-      role: 'close'
+      label: "Close",
+      accelerator: "CmdOrCtrl+W",
+      role: "close"
     },
     {
-      label: 'Minimize',
-      accelerator: 'CmdOrCtrl+M',
-      role: 'minimize'
+      label: "Minimize",
+      accelerator: "CmdOrCtrl+M",
+      role: "minimize"
     },
     {
-      label: 'Zoom',
-      role: 'zoom'
+      label: "Zoom",
+      role: "zoom"
     },
     {
-      type: 'separator'
+      type: "separator"
     },
     {
-      label: 'Bring All to Front',
-      role: 'front'
+      label: "Bring All to Front",
+      role: "front"
     }
-  ]
+  ];
 }
-
