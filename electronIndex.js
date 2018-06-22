@@ -1,6 +1,6 @@
 const electron = require("electron");
 const { ipcRenderer } = electron;
-const bootstrap =require('bootstrap');
+const bootstrap =require('bootstrap'); //required even though not called!!
 var $ = require("jquery");
 
 let serverList = [];
@@ -12,8 +12,8 @@ let replyCount = 0;
 
 let sortOptions = { "currentField": null, "currentDir": -1 };
 
-const refreshButton = document.querySelector("#refreshButton");
-refreshButton.addEventListener("click", refresh);
+// const refreshButton = document.querySelector("#refreshButton");
+// refreshButton.addEventListener("click", refresh);
 
 // const fudgeButton = document.querySelector('#fudgeButton');
 // fudgeButton.addEventListener("click", fudgeFunction);
@@ -164,10 +164,19 @@ function drawMultiTables() {
 
   //multiTableDiv.innerHTML = "";
   accordionContainer.innerHTML = "";
+  const refreshDiv = document.querySelector("#refreshDiv");
+  refreshDiv.innerHTML = "";
 
   if (serverList.length < 1) {
     return;
-  }
+  } 
+  
+  refreshButton = document.createElement("button");
+  refreshButton.id="refreshButton" ;
+  refreshButton.classList="btn btn-primary btn-block";
+  refreshButton.textContent = "refresh all";
+  refreshButton.addEventListener("click", refresh);
+  refreshDiv.appendChild(refreshButton);
 
   for (currentLB of tempLBList) {
 
@@ -176,24 +185,24 @@ function drawMultiTables() {
   
     accordionContainer.appendChild(accordiondiv)
 
-    let c = document.createElement("div");
-    c.classList = "card";
-    let ch = document.createElement("div");
-    ch.classList ="card-header";
-    ch.id = "heading-"+currentLB.name;
+    let card = document.createElement("div");
+    card.classList = "card";
+    let cardheader = document.createElement("div");
+    cardheader.classList ="card-header";
+    cardheader.id = "heading-"+currentLB.name;
     let chh = document.createElement("H5");
     chh.classList = "mb-0";
-    let hb = document.createElement("button");
-    hb.classList = "btn btn-link";
-    hb.setAttribute('data-toggle',"collapse");
-    hb.setAttribute('data-target',"#collapse-"+currentLB.name);
-    hb.setAttribute('aria-expanded',"true");
-    hb.setAttribute('aria-controls',"collapse-"+currentLB.name);
-
-    let bt = document.createTextNode(currentLB.name + " - " + currentLB.state);
-    hb.appendChild(bt);
-    chh.appendChild(hb);
-    ch.appendChild(chh);
+    let hbtn = document.createElement("button");
+    hbtn.classList = "btn btn-link";
+    hbtn.setAttribute('data-toggle',"collapse");
+    hbtn.setAttribute('data-target',"#collapse-"+currentLB.name);
+    hbtn.setAttribute('aria-expanded',"true");
+    hbtn.setAttribute('aria-controls',"collapse-"+currentLB.name);
+    hbtn.textContent = currentLB.name + " - " + currentLB.state;
+    //let bt = document.createTextNode(currentLB.name + " - " + currentLB.state);
+    //hbtn.appendChild(bt);
+    chh.appendChild(hbtn);
+    cardheader.appendChild(chh);
 
     let cd = document.createElement("div");
     cd.id="collapse-"+currentLB.name;
@@ -211,9 +220,9 @@ function drawMultiTables() {
     cb.appendChild(cbd);
     cd.appendChild(cb);
 
-    c.appendChild(ch);
-    c.appendChild(cd);
-    accordiondiv.appendChild(c);
+    card.appendChild(cardheader);
+    card.appendChild(cd);
+    accordiondiv.appendChild(card);
 
 
     //var h = document.createElement("H4"); // Create a <h1> element
