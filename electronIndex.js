@@ -11,9 +11,8 @@ let requestCount = 0;
 let replyCount = 0;
 
 let sortOptions = { "currentField": null, "currentDir": -1 };
-
-// const refreshButton = document.querySelector("#refreshButton");
-// refreshButton.addEventListener("click", refresh);
+const accordionContainer = document.querySelector("#accordionContainer");
+const modalDiv = document.querySelector("#modalDiv");
 
 // const fudgeButton = document.querySelector('#fudgeButton');
 // fudgeButton.addEventListener("click", fudgeFunction);
@@ -27,7 +26,6 @@ let sortOptions = { "currentField": null, "currentDir": -1 };
 
 
 function makeModal(server){
-  const modalDiv = document.querySelector("#modalDiv");
   modalDiv.innerHTML="";
   let mfade = document.createElement("div");
   mfade.classList = "modal fade";
@@ -53,7 +51,6 @@ function makeModal(server){
   btn.setAttribute("aria-label","Close");
   let btnspan = document.createElement("span");
   btnspan.setAttribute("aria-hidden","true");
-  // let btnspantext=document.createTextNode(&times;);
   let mbody = document.createElement("div");
   mbody.classList="modal-body";
   let mfoot = document.createElement("div");
@@ -64,8 +61,6 @@ function makeModal(server){
   mfootbtn.setAttribute("data-dismiss","modal");
   mfootbtn.textContent = "Close";
 
-  //btnspan.textContent = "&times;";
-  // btnspan.appendChild(btnspantext);
   btnspan.innerHTML= "&times;"
   btn.appendChild(btnspan);
   mttitle.appendChild(mttext);
@@ -82,7 +77,6 @@ function makeModal(server){
   mfade.appendChild(mdialog);
 
   modalDiv.appendChild(mfade);
-
   
   let h = document.createElement("H5");                // Create a <h1> element
   let t = document.createTextNode("http://" + server.hostname + ":" + server.port + server.endpoint);     // Create a text node
@@ -98,8 +92,6 @@ function makeModal(server){
 
 }
 
-//const multiTableDiv = document.querySelector("#multiTableDiv");
-const accordionContainer = document.querySelector("#accordionContainer");
 
 function refresh(e) {
   drawMultiTables();
@@ -162,7 +154,6 @@ function drawMultiTables() {
     } else return 0;
   });
 
-  //multiTableDiv.innerHTML = "";
   accordionContainer.innerHTML = "";
   const refreshDiv = document.querySelector("#refreshDiv");
   refreshDiv.innerHTML = "";
@@ -199,8 +190,7 @@ function drawMultiTables() {
     hbtn.setAttribute('aria-expanded',"true");
     hbtn.setAttribute('aria-controls',"collapse-"+currentLB.name);
     hbtn.textContent = currentLB.name + " - " + currentLB.state;
-    //let bt = document.createTextNode(currentLB.name + " - " + currentLB.state);
-    //hbtn.appendChild(bt);
+ 
     chh.appendChild(hbtn);
     cardheader.appendChild(chh);
 
@@ -214,21 +204,13 @@ function drawMultiTables() {
     cb.classList="card-body";
     let cbd = document.createElement("div");
     cbd.classList="table-responsive"
-    //let cbt = document.createTextNode("body " + currentLB.state);
 
-    //cb.appendChild(cbt);
     cb.appendChild(cbd);
     cd.appendChild(cb);
 
     card.appendChild(cardheader);
     card.appendChild(cd);
     accordiondiv.appendChild(card);
-
-
-    //var h = document.createElement("H4"); // Create a <h1> element
-    //var t = document.createTextNode(currentLB.name + " - " + currentLB.state); // Create a text node
-    //h.appendChild(t); // Append the text to <h1>
-    //multiTableDiv.appendChild(h);
 
     let table = document.createElement("table");
     table.classList = "table table-light table-hover";
@@ -317,8 +299,6 @@ function drawMultiTables() {
         cellbtn.appendChild(refButton);
       }
     }
-    //multiTableDiv.appendChild(table);
-    // cb.appendChild(table);
     cbd.appendChild(table);
   }
 }
