@@ -1,5 +1,7 @@
 const electron = require("electron");
 const { ipcRenderer } = electron;
+const bootstrap =require('bootstrap');
+var $ = require("jquery");
 
 let serverList = [];
 let envTypeList;
@@ -18,10 +20,51 @@ refreshButton.addEventListener("click", refresh);
 
 // function fudgeFunction(){
 //     console.log("Clicked");
-//     ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
+//     makeCollapse();
+//     //$('#collapseThree').collapse('hide')
+//     //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
 // }
 
+function makeCollapse(){
+  const accordionContainer = document.querySelector("#accordionContainer");
+
+  let accordiondiv = document.createElement("div");
+  accordiondiv.id = "myAccordion";
+
+  accordionContainer.appendChild(accordiondiv)
+
+  for(let i =0; i<3;i++){
+    let c = document.createElement("div");
+    c.classList = "card";
+    let ch = document.createElement("div");
+    ch.classList ="card-header";
+    let h = document.createElement("H5");
+    h.classList = "mb-0";
+    let hb = document.createElement("button");
+    hb.classList = "btn btn-link";
+    let bt = document.createTextNode("header " + i);
+    hb.appendChild(bt);
+    h.appendChild(hb);
+    ch.appendChild(h);
+
+    let cd = document.createElement("div");
+    let cb = document.createElement("div");
+    let cbt = document.createTextNode("body " + i);
+
+    cb.appendChild(cbt);
+    cd.appendChild(cb);
+
+    c.appendChild(ch);
+    c.appendChild(cd);
+    accordiondiv.appendChild(c);
+  }
+
+
+}
+
+
 const multiTableDiv = document.querySelector("#multiTableDiv");
+const accordionContainer = document.querySelector("#accordionContainer");
 
 function refresh(e) {
   drawMultiTables();
@@ -84,17 +127,64 @@ function drawMultiTables() {
     } else return 0;
   });
 
-  multiTableDiv.innerHTML = "";
+  //multiTableDiv.innerHTML = "";
+  accordionContainer.innerHTML = "";
 
   if (serverList.length < 1) {
     return;
   }
 
   for (currentLB of tempLBList) {
-    var h = document.createElement("H4"); // Create a <h1> element
-    var t = document.createTextNode(currentLB.name + " - " + currentLB.state); // Create a text node
-    h.appendChild(t); // Append the text to <h1>
-    multiTableDiv.appendChild(h);
+
+    let accordiondiv = document.createElement("div");
+    accordiondiv.id = "myAccordion";
+  
+    accordionContainer.appendChild(accordiondiv)
+
+    let c = document.createElement("div");
+    c.classList = "card";
+    let ch = document.createElement("div");
+    ch.classList ="card-header";
+    ch.id = "heading-"+currentLB.name;
+    let chh = document.createElement("H5");
+    chh.classList = "mb-0";
+    let hb = document.createElement("button");
+    hb.classList = "btn btn-link";
+    hb.setAttribute('data-toggle',"collapse");
+    hb.setAttribute('data-target',"#collapse-"+currentLB.name);
+    hb.setAttribute('aria-expanded',"true");
+    hb.setAttribute('aria-controls',"collapse-"+currentLB.name);
+
+    let bt = document.createTextNode(currentLB.name + " - " + currentLB.state);
+    hb.appendChild(bt);
+    chh.appendChild(hb);
+    ch.appendChild(chh);
+
+    let cd = document.createElement("div");
+    cd.id="collapse-"+currentLB.name;
+    cd.classList="collapse show"
+    cd.setAttribute('aria-labelledby',"heading-"+currentLB.name);
+    cd.setAttribute('data-parent',"#"+accordiondiv.id);
+
+    let cb = document.createElement("div");
+    cb.classList="card-body";
+    let cbd = document.createElement("div");
+    cbd.classList="table-responsive"
+    //let cbt = document.createTextNode("body " + currentLB.state);
+
+    //cb.appendChild(cbt);
+    cb.appendChild(cbd);
+    cd.appendChild(cb);
+
+    c.appendChild(ch);
+    c.appendChild(cd);
+    accordiondiv.appendChild(c);
+
+
+    //var h = document.createElement("H4"); // Create a <h1> element
+    //var t = document.createTextNode(currentLB.name + " - " + currentLB.state); // Create a text node
+    //h.appendChild(t); // Append the text to <h1>
+    //multiTableDiv.appendChild(h);
 
     let table = document.createElement("table");
     table.classList = "table table-light table-hover";
@@ -183,7 +273,9 @@ function drawMultiTables() {
         cellbtn.appendChild(refButton);
       }
     }
-    multiTableDiv.appendChild(table);
+    //multiTableDiv.appendChild(table);
+    // cb.appendChild(table);
+    cbd.appendChild(table);
   }
 }
 
