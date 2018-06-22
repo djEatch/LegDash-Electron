@@ -35,7 +35,7 @@ function makeModal(server){
   mfade.setAttribute("aria-labelledby","myModalTitle");
   mfade.setAttribute("aria-hidden","true");
   let mdialog = document.createElement("div");
-  mdialog.classList="modal-dialog";
+  mdialog.classList="modal-dialog modal-lg";
   mdialog.setAttribute("role","document");
   let mcontent = document.createElement("div");
   mcontent.classList = "modal-content"
