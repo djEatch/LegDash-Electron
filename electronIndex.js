@@ -25,42 +25,6 @@ refreshButton.addEventListener("click", refresh);
 //     //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
 // }
 
-function makeCollapse(){
-  const accordionContainer = document.querySelector("#accordionContainer");
-
-  let accordiondiv = document.createElement("div");
-  accordiondiv.id = "myAccordion";
-
-  accordionContainer.appendChild(accordiondiv)
-
-  for(let i =0; i<3;i++){
-    let c = document.createElement("div");
-    c.classList = "card";
-    let ch = document.createElement("div");
-    ch.classList ="card-header";
-    let h = document.createElement("H5");
-    h.classList = "mb-0";
-    let hb = document.createElement("button");
-    hb.classList = "btn btn-link";
-    let bt = document.createTextNode("header " + i);
-    hb.appendChild(bt);
-    h.appendChild(hb);
-    ch.appendChild(h);
-
-    let cd = document.createElement("div");
-    let cb = document.createElement("div");
-    let cbt = document.createTextNode("body " + i);
-
-    cb.appendChild(cbt);
-    cd.appendChild(cb);
-
-    c.appendChild(ch);
-    c.appendChild(cd);
-    accordiondiv.appendChild(c);
-  }
-
-
-}
 
 function makeModal(server){
   const modalDiv = document.querySelector("#modalDiv");
@@ -131,27 +95,7 @@ function makeModal(server){
   mbody.appendChild(h);
 
   $('#myModal').modal('show')
-/*
-<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        ...
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
-      </div>
-    </div>
-  </div>
-</div>
-*/
+
 }
 
 //const multiTableDiv = document.querySelector("#multiTableDiv");
@@ -665,6 +609,7 @@ function getRequest(callback, url, id, username, password) {
       callback(xhr.responseText, id, endTime - startTime);
     }
     if (xhr.readyState == 4 && xhr.status != 200) {
+      var endTime = new Date();
       callback(
         "connection error, status:" + xhr.status,
         id,

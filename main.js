@@ -50,30 +50,6 @@ app.on("ready", function() {
   Menu.setApplicationMenu(winMenu);
 });
 
-ipcMain.on("popup", (e, server) => {
-  console.log("triggered");
-  pop = new BrowserWindow({
-    parent: win,
-    modal: true,
-    show: false,
-    transparent: true,
-    width: 700,
-    height: 400
-  }); //{show: false, width: 800, height: 600}
-  pop.loadURL(
-    url.format({
-      pathname: path.join(__dirname, "electronPopup.html"),
-      protocol: "file:",
-      slashes: true
-    })
-  );
-
-  pop.once("ready-to-show", () => {
-    pop.webContents.send("showServerDetails", server);
-    pop.show();
-  });
-});
-
 function getEnvTypeList() {
   envTypeList = [];
   var data = fs.readFileSync(envFile).toString();
