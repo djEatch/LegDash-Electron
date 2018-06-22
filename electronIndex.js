@@ -20,7 +20,7 @@ refreshButton.addEventListener("click", refresh);
 
 // function fudgeFunction(){
 //     console.log("Clicked");
-//     makeCollapse();
+//     makeModal();
 //     //$('#collapseThree').collapse('hide')
 //     //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
 // }
@@ -62,8 +62,99 @@ function makeCollapse(){
 
 }
 
+function makeModal(server){
+  const modalDiv = document.querySelector("#modalDiv");
+  modalDiv.innerHTML="";
+  let mfade = document.createElement("div");
+  mfade.classList = "modal fade";
+  mfade.id = "myModal";
+  mfade.setAttribute("tabindex","-1");
+  mfade.setAttribute("role","dialog");
+  mfade.setAttribute("aria-labelledby","myModalTitle");
+  mfade.setAttribute("aria-hidden","true");
+  let mdialog = document.createElement("div");
+  mdialog.classList="modal-dialog";
+  mdialog.setAttribute("role","document");
+  let mcontent = document.createElement("div");
+  mcontent.classList = "modal-content"
+  let mheader = document.createElement("div");
+  mheader.classList ="modal-header";
+  let mttitle = document.createElement("H5");
+  mttitle.class = "modal-title";
+  let mttext =document.createTextNode(server.hostname);
+  let btn = document.createElement("button");
+  btn.type="button";
+  btn.classList = "close"
+  btn.setAttribute("data-dismiss","modal")
+  btn.setAttribute("aria-label","Close");
+  let btnspan = document.createElement("span");
+  btnspan.setAttribute("aria-hidden","true");
+  // let btnspantext=document.createTextNode(&times;);
+  let mbody = document.createElement("div");
+  mbody.classList="modal-body";
+  let mfoot = document.createElement("div");
+  mfoot.classList = "modal-footer";
+  let mfootbtn = document.createElement("button");
+  mfootbtn.type = "button";
+  mfootbtn.classList = "btn btn-primary";
+  mfootbtn.setAttribute("data-dismiss","modal");
+  mfootbtn.textContent = "Close";
 
-const multiTableDiv = document.querySelector("#multiTableDiv");
+  //btnspan.textContent = "&times;";
+  // btnspan.appendChild(btnspantext);
+  btnspan.innerHTML= "&times;"
+  btn.appendChild(btnspan);
+  mttitle.appendChild(mttext);
+  mheader.appendChild(mttitle);
+  mheader.appendChild(btn);
+  
+  mfoot.appendChild(mfootbtn);
+
+  mcontent.appendChild(mheader);
+  mcontent.appendChild(mbody);
+  mcontent.appendChild(mfoot);
+
+  mdialog.appendChild(mcontent);
+  mfade.appendChild(mdialog);
+
+  modalDiv.appendChild(mfade);
+
+  
+  let h = document.createElement("H5");                // Create a <h1> element
+  let t = document.createTextNode("http://" + server.hostname + ":" + server.port + server.endpoint);     // Create a text node
+  h.appendChild(t);  // Append the text to <h1>
+  mbody.appendChild(h);
+
+  h = document.createElement("P");                // Create a <h1> element
+  t = document.createTextNode(server.response);     // Create a text node
+  h.appendChild(t);  // Append the text to <h1>
+  mbody.appendChild(h);
+
+  $('#myModal').modal('show')
+/*
+<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        ...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+*/
+}
+
+//const multiTableDiv = document.querySelector("#multiTableDiv");
 const accordionContainer = document.querySelector("#accordionContainer");
 
 function refresh(e) {
@@ -321,7 +412,8 @@ function showResponseDetails(e) {
       server.hostname == e.target.attributes["data-server-hostname"].value &&
       server.name == e.target.attributes["data-server-name"].value
     ) {
-      ipcRenderer.send("popup", server);
+      //ipcRenderer.send("popup", server);
+      makeModal(server);
     }
   }
 }
