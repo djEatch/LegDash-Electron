@@ -176,28 +176,31 @@ function drawMultiTables() {
   
     accordionContainer.appendChild(accordiondiv)
 
+    let shortName = currentLB.splitEnvName +  currentLB.splitServerType + currentLB.splitLeg;
+    console.log(currentLB);
+
     let card = document.createElement("div");
     card.classList = "card";
     let cardheader = document.createElement("div");
     cardheader.classList ="card-header";
-    cardheader.id = "heading-"+currentLB.name;
+    cardheader.id = "heading"+shortName;
     let chh = document.createElement("H5");
     chh.classList = "mb-0";
     let hbtn = document.createElement("button");
     hbtn.classList = "btn btn-link";
     hbtn.setAttribute('data-toggle',"collapse");
-    hbtn.setAttribute('data-target',"#collapse-"+currentLB.name);
+    hbtn.setAttribute('data-target',"#collapse"+shortName);
     hbtn.setAttribute('aria-expanded',"true");
-    hbtn.setAttribute('aria-controls',"collapse-"+currentLB.name);
+    hbtn.setAttribute('aria-controls',"collapse"+shortName);
     hbtn.textContent = currentLB.name + " - " + currentLB.state;
  
     chh.appendChild(hbtn);
     cardheader.appendChild(chh);
 
     let cd = document.createElement("div");
-    cd.id="collapse-"+currentLB.name;
+    cd.id="collapse"+shortName;
     cd.classList="collapse show"
-    cd.setAttribute('aria-labelledby',"heading-"+currentLB.name);
+    cd.setAttribute('aria-labelledby',"heading"+shortName);
     cd.setAttribute('data-parent',"#"+accordiondiv.id);
 
     let cb = document.createElement("div");
