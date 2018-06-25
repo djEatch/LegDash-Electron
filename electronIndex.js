@@ -1,6 +1,6 @@
 const electron = require("electron");
 const { ipcRenderer } = electron;
-const bootstrap =require('bootstrap'); //required even though not called!!
+const bootstrap = require("bootstrap"); //required even though not called!!
 var $ = require("jquery");
 
 let serverList = [];
@@ -10,63 +10,63 @@ let lbServerList = [];
 let requestCount = 0;
 let replyCount = 0;
 
-let sortOptions = { "currentField": null, "currentDir": -1 };
+let sortOptions = { currentField: null, currentDir: -1 };
 const accordionContainer = document.querySelector("#accordionContainer");
 const modalDiv = document.querySelector("#modalDiv");
 
-// const fudgeButton = document.querySelector('#fudgeButton');
+// const fudgeButton = document.querySelector("#fudgeButton");
 // fudgeButton.addEventListener("click", fudgeFunction);
 
-// function fudgeFunction(){
-//     console.log("Clicked");
-//     makeModal();
-//     //$('#collapseThree').collapse('hide')
-//     //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
+// function fudgeFunction() {
+//   console.log("Clicked");
+//   maintMode("TEST", serverList[0]);
+//   //makeModal();
+//   //$('#collapseThree').collapse('hide')
+//   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
 // }
 
-
-function makeModal(server){
-  modalDiv.innerHTML="";
+function makeModal(server) {
+  modalDiv.innerHTML = "";
   let mfade = document.createElement("div");
   mfade.classList = "modal fade";
   mfade.id = "myModal";
-  mfade.setAttribute("tabindex","-1");
-  mfade.setAttribute("role","dialog");
-  mfade.setAttribute("aria-labelledby","myModalTitle");
-  mfade.setAttribute("aria-hidden","true");
+  mfade.setAttribute("tabindex", "-1");
+  mfade.setAttribute("role", "dialog");
+  mfade.setAttribute("aria-labelledby", "myModalTitle");
+  mfade.setAttribute("aria-hidden", "true");
   let mdialog = document.createElement("div");
-  mdialog.classList="modal-dialog modal-lg";
-  mdialog.setAttribute("role","document");
+  mdialog.classList = "modal-dialog modal-lg";
+  mdialog.setAttribute("role", "document");
   let mcontent = document.createElement("div");
-  mcontent.classList = "modal-content"
+  mcontent.classList = "modal-content";
   let mheader = document.createElement("div");
-  mheader.classList ="modal-header";
+  mheader.classList = "modal-header";
   let mttitle = document.createElement("H5");
   mttitle.class = "modal-title";
-  let mttext =document.createTextNode(server.hostname);
+  let mttext = document.createTextNode(server.hostname);
   let btn = document.createElement("button");
-  btn.type="button";
-  btn.classList = "close"
-  btn.setAttribute("data-dismiss","modal")
-  btn.setAttribute("aria-label","Close");
+  btn.type = "button";
+  btn.classList = "close";
+  btn.setAttribute("data-dismiss", "modal");
+  btn.setAttribute("aria-label", "Close");
   let btnspan = document.createElement("span");
-  btnspan.setAttribute("aria-hidden","true");
+  btnspan.setAttribute("aria-hidden", "true");
   let mbody = document.createElement("div");
-  mbody.classList="modal-body";
+  mbody.classList = "modal-body";
   let mfoot = document.createElement("div");
   mfoot.classList = "modal-footer";
   let mfootbtn = document.createElement("button");
   mfootbtn.type = "button";
   mfootbtn.classList = "btn btn-primary";
-  mfootbtn.setAttribute("data-dismiss","modal");
+  mfootbtn.setAttribute("data-dismiss", "modal");
   mfootbtn.textContent = "Close";
 
-  btnspan.innerHTML= "&times;"
+  btnspan.innerHTML = "&times;";
   btn.appendChild(btnspan);
   mttitle.appendChild(mttext);
   mheader.appendChild(mttitle);
   mheader.appendChild(btn);
-  
+
   mfoot.appendChild(mfootbtn);
 
   mcontent.appendChild(mheader);
@@ -77,21 +77,43 @@ function makeModal(server){
   mfade.appendChild(mdialog);
 
   modalDiv.appendChild(mfade);
-  
-  let h = document.createElement("H5");                // Create a <h1> element
-  let t = document.createTextNode("http://" + server.hostname + ":" + server.port + server.endpoint);     // Create a text node
-  h.appendChild(t);  // Append the text to <h1>
+
+  let h = document.createElement("H5"); // Create a <h1> element
+  let t = document.createTextNode(
+    "http://" + server.hostname + ":" + server.port + server.endpoint
+  ); // Create a text node
+  h.appendChild(t); // Append the text to <h1>
   mbody.appendChild(h);
 
-  h = document.createElement("P");                // Create a <h1> element
-  t = document.createTextNode(server.response);     // Create a text node
-  h.appendChild(t);  // Append the text to <h1>
+  h = document.createElement("P"); // Create a <h1> element
+  t = document.createTextNode(server.response); // Create a text node
+  h.appendChild(t); // Append the text to <h1>
   mbody.appendChild(h);
 
-  $('#myModal').modal('show')
+  let setMaintBtn = document.createElement("button");
+  let unsetMaintBtn = document.createElement("button");
+  setMaintBtn.id = "setMaintBtn";
+  unsetMaintBtn.id = "unsetMaintBtn";
+  setMaintBtn.textContent = "Set Maintenance Mode";
+  unsetMaintBtn.textContent = "Unset Maintenance Mode";
+  setMaintBtn.classList = "btn btn-secondary";
+  unsetMaintBtn.classList = "btn btn-secondary";
 
+  //setMaintBtn.setAttribute("data-toggle", "popover");
+  //unsetMaintBtn.setAttribute("data-toggle", "popover");
+
+  setMaintBtn.addEventListener("click", () => {
+    maintMode("SET", server);
+  });
+  unsetMaintBtn.addEventListener("click", () => {
+    maintMode("UNSET", server);
+  });
+
+  mfoot.insertBefore(setMaintBtn, mfootbtn);
+  mfoot.insertBefore(unsetMaintBtn, mfootbtn);
+
+  $("#myModal").modal("show");
 }
-
 
 function refresh(e) {
   drawMultiTables();
@@ -99,9 +121,9 @@ function refresh(e) {
   //ipcRenderer.send('refreshList'); <---- this is for old list in text file....
 }
 
-function resetSort(){
-    sortOptions = { currentField: null, currentDir: -1 };
-    //sortData("name", "hostname");
+function resetSort() {
+  sortOptions = { currentField: null, currentDir: -1 };
+  //sortData("name", "hostname");
 }
 
 function sortData(field, field2) {
@@ -160,53 +182,53 @@ function drawMultiTables() {
 
   if (serverList.length < 1) {
     return;
-  } 
-  
+  }
+
   refreshButton = document.createElement("button");
-  refreshButton.id="refreshButton" ;
-  refreshButton.classList="btn btn-primary btn-block";
+  refreshButton.id = "refreshButton";
+  refreshButton.classList = "btn btn-primary btn-block";
   refreshButton.textContent = "refresh all";
   refreshButton.addEventListener("click", refresh);
   refreshDiv.appendChild(refreshButton);
 
   for (currentLB of tempLBList) {
-
     let accordiondiv = document.createElement("div");
     accordiondiv.id = "myAccordion";
-  
-    accordionContainer.appendChild(accordiondiv)
 
-    let shortName = currentLB.splitEnvName +  currentLB.splitServerType + currentLB.splitLeg;
-    console.log(currentLB);
+    accordionContainer.appendChild(accordiondiv);
+
+    let shortName =
+      currentLB.splitEnvName + currentLB.splitServerType + currentLB.splitLeg;
+    //console.log(currentLB);
 
     let card = document.createElement("div");
     card.classList = "card";
     let cardheader = document.createElement("div");
-    cardheader.classList ="card-header";
-    cardheader.id = "heading"+shortName;
+    cardheader.classList = "card-header";
+    cardheader.id = "heading" + shortName;
     let chh = document.createElement("H5");
     chh.classList = "mb-0";
     let hbtn = document.createElement("button");
     hbtn.classList = "btn btn-link";
-    hbtn.setAttribute('data-toggle',"collapse");
-    hbtn.setAttribute('data-target',"#collapse"+shortName);
-    hbtn.setAttribute('aria-expanded',"true");
-    hbtn.setAttribute('aria-controls',"collapse"+shortName);
+    hbtn.setAttribute("data-toggle", "collapse");
+    hbtn.setAttribute("data-target", "#collapse" + shortName);
+    hbtn.setAttribute("aria-expanded", "true");
+    hbtn.setAttribute("aria-controls", "collapse" + shortName);
     hbtn.textContent = currentLB.name + " - " + currentLB.state;
- 
+
     chh.appendChild(hbtn);
     cardheader.appendChild(chh);
 
     let cd = document.createElement("div");
-    cd.id="collapse"+shortName;
-    cd.classList="collapse show"
-    cd.setAttribute('aria-labelledby',"heading"+shortName);
-    cd.setAttribute('data-parent',"#"+accordiondiv.id);
+    cd.id = "collapse" + shortName;
+    cd.classList = "collapse show";
+    cd.setAttribute("aria-labelledby", "heading" + shortName);
+    cd.setAttribute("data-parent", "#" + accordiondiv.id);
 
     let cb = document.createElement("div");
-    cb.classList="card-body";
+    cb.classList = "card-body";
     let cbd = document.createElement("div");
-    cbd.classList="table-responsive"
+    cbd.classList = "table-responsive";
 
     cb.appendChild(cbd);
     cd.appendChild(cb);
@@ -458,7 +480,6 @@ function setupSubEnvDropDown(_inList, _envDetails) {
     getServerListFromSubLBList(newList.value, subLBList, _envDetails);
   });
   btnDivSubEnv.appendChild(pickSubEnvBtn);
-  
 }
 
 function gotSubLBList(data, _envDetails) {
@@ -515,7 +536,7 @@ function gotSubServerList(data, _subLB) {
       subLBServer.MLBState = subLBResponse.lbvserver[0].state;
       lbServerList.push(subLBServer);
     }
-    console.log(lbServerList.length);
+    //console.log(lbServerList.length);
   } catch (err) {
     console.log("BAD Response from Sub LB");
     console.log(_subLB);
@@ -538,7 +559,8 @@ function processServers() {
     lbServer.ip = lbServer.primaryipaddress;
     lbServer.hostname = splitTextQuestion[1] + ".corp.internal";
     lbServer.port = splitTextQuestion[2];
-    lbServer.endpoint = "/application-status-monitor/rest/applicationstatusmonitor/status.json";
+    lbServer.endpoint =
+      "/application-status-monitor/rest/applicationstatusmonitor/status.json";
     lbServer.response = "querying...";
     lbServer.ASMleg = "querying...";
     lbServer.availability = null;
@@ -562,7 +584,6 @@ function requestAllServerDetails() {
 
 function individualRefresh(e) {
   for (let server of serverList) {
-
     if (
       server.port == e.target.attributes["data-server-port"].value &&
       server.hostname == e.target.attributes["data-server-hostname"].value
@@ -611,6 +632,25 @@ function getRequest(callback, url, id, username, password) {
   };
 }
 
+function postRequest(callback, url, args, auth, action, server) {
+  var xhr = new XMLHttpRequest();
+
+  xhr.open("POST", url, true);
+  xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  if (auth) {
+    xhr.setRequestHeader("Authorization", auth);
+  }
+  xhr.send(args);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == 4 && xhr.status == 200) {
+      callback(xhr.responseText, action, null, server);
+    }
+    if (xhr.readyState == 4 && xhr.status != 200) {
+      callback(xhr.responseText, action, xhr.status, server);
+    }
+  };
+}
+
 function updateServerResults(data, _server, timing) {
   //format = {"status":{"available":true,"currentStatus":"UP_AND_RUNNING","label":"LEGX"}}
   for (server of serverList) {
@@ -635,6 +675,75 @@ function updateServerResults(data, _server, timing) {
     }
   }
   drawMultiTables();
+}
+
+function postedMaint(response, action, err, server) {
+  let replyStatus;
+  if (err) {
+    replyStatus = "Error: " + err;
+  } else {
+    let parser = new DOMParser();
+    let reply = parser.parseFromString(response, "text/html");
+    replyStatus = reply.getElementById("fade").textContent;
+    console.log(reply);
+  }
+  console.log(replyStatus);
+  switch (action) {
+    case "SET":
+      $("#setMaintBtn").popover("dispose");
+      $("#setMaintBtn").popover({ content: replyStatus, trigger: "focus" });
+      $("#setMaintBtn").popover("show");
+      break;
+    case "UNSET":
+      $("#unsetMaintBtn").popover("dispose");
+      $("#unsetMaintBtn").popover({ content: replyStatus, trigger: "focus" });
+      $("#unsetMaintBtn").popover("show");
+      break;
+    default:
+      console.log("unknown reply", action);
+  }
+  getServerDetails(server);
+}
+
+function maintMode(action, server) {
+  //gbrpmsuisf01.corp.internal
+
+  switch (action.toUpperCase()) {
+    case "SET": {
+      postRequest(
+        postedMaint,
+        "https://" +
+          server.hostname +
+          ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode(int,boolean)",
+        "param=0&param=true&executed=true",
+        "Basic " + btoa("FT1Admin:changeme"),
+        action,
+        server
+      );
+      // https://gbrpmsuisf01.corp.internal:8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode%28int%2Cboolean%29
+      console.log(action, server);
+      break;
+    }
+    case "UNSET": {
+      postRequest(
+        postedMaint,
+        "https://" +
+          server.hostname +
+          ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/unsetMaintenanceMode()",
+        "executed=true",
+        "Basic " + btoa("FT1Admin:changeme"),
+        action,
+        server
+      );
+      // https://gbrpmsuisf01.corp.internal:8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/unsetMaintenanceMode%28%29
+      console.log(action, server);
+      break;
+    }
+    default: {
+      console.log(server);
+    }
+  }
+  console.log("end of function");
 }
 
 class Server {

@@ -107,6 +107,19 @@ app.on("activate", () => {
   }
 });
 
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+
+  let regEx =  new RegExp("^https:\/\/.+corp.internal:");
+  let res = regEx.exec(url);
+  if (res) {
+    // Verification logic.
+    event.preventDefault()
+    callback(true)
+  } else {
+    callback(false)
+  }
+})
+
 const template = [
   {
     label: "Edit",
