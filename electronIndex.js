@@ -5,7 +5,10 @@ var $ = require("jquery");
 
 let serverList = [];
 let envTypeList;
+let masterLBList = [];
 let subLBList = [];
+let currentMLB;
+let currentSubEnv;
 let lbServerList = [];
 let requestCount = 0;
 let replyCount = 0;
@@ -19,7 +22,7 @@ const modalDiv = document.querySelector("#modalDiv");
 
 // function fudgeFunction() {
 //   console.log("Clicked");
-//   maintMode("TEST", serverList[0]);
+//   whatDoesLBThinkOfThisServer(serverList[6]);
 //   //makeModal();
 //   //$('#collapseThree').collapse('hide')
 //   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
@@ -188,7 +191,10 @@ function drawMultiTables() {
   refreshButton.id = "refreshButton";
   refreshButton.classList = "btn btn-primary btn-block";
   refreshButton.textContent = "refresh all";
-  refreshButton.addEventListener("click", refresh);
+  //refreshButton.addEventListener("click", refresh);
+  refreshButton.addEventListener("click", () => {
+    getServerListFromSubLBList(currentSubEnv);
+  });
   refreshDiv.appendChild(refreshButton);
 
   for (currentLB of tempLBList) {
@@ -380,18 +386,19 @@ function onlyUnique(value, index, self) {
   return self.indexOf(value) === index;
 }
 
-ipcRenderer.on("updateEnvTypeList", function(e, _envTypeData) {
-  setupEnvTypeList(_envTypeData);
+ipcRenderer.on("updateMasterLBList", function(e, _masterLBList) {
+  masterLBList = _masterLBList;
+  setupEnvTypeList();
 });
 
-function setupEnvTypeList(envTypeData) {
-  envTypeList = envTypeData;
+function setupEnvTypeList() {
+  //envTypeList = envTypeData;
 
   dropDownDivEnvType = document.querySelector("#dropDownDivEnvType");
   let newList = document.createElement("select");
 
-  for (env of envTypeList) {
-    newList.appendChild(new Option(env.envname, env.envname));
+  for (lb of masterLBList) {
+    newList.appendChild(new Option(lb.envname, lb.envname));
   }
   newList.addEventListener("change", function() {
     itemtoKill = document.querySelector("#pickSubEnvBtn");
@@ -431,35 +438,34 @@ function setupEnvTypeList(envTypeData) {
 }
 
 function pickedEnvType(_envType) {
-  let envDetails;
-  if ((envDetails = getMasterLBAddressForEnvType(_envType, envTypeList))) {
-    let masterLBAddress = "http://" + envDetails.hostname + envDetails.endpoint;
+  if ((currentMLB = getMasterLBForEnvType(_envType))) {
+    let masterLBAddress = "http://" + currentMLB.hostname + currentMLB.endpoint;
     getRequest(
       gotSubLBList,
       masterLBAddress,
-      envDetails,
-      envDetails.username,
-      envDetails.password
+      currentMLB,
+      currentMLB.username,
+      currentMLB.password
     );
   } else {
     console.log(_envType + " doesn't exist");
   }
 }
 
-function getMasterLBAddressForEnvType(_envType, _envTypeList) {
-  for (env of _envTypeList) {
-    if (env.envname == _envType) {
-      return env;
+function getMasterLBForEnvType(_envType) {
+  for (mlb of masterLBList) {
+    if (mlb.envname == _envType) {
+      return mlb;
     }
   }
   return false;
 }
 
-function setupSubEnvDropDown(_inList, _envDetails) {
+function setupSubEnvDropDown() {
   dropDownDivSubEnv = document.querySelector("#dropDownDivSubEnv");
   let newList = document.createElement("select");
   let tempEnvList = [];
-  for (item of _inList) {
+  for (item of subLBList) {
     tempEnvList.push(item.splitEnvName);
   }
   tempEnvList = tempEnvList.filter(onlyUnique);
@@ -477,12 +483,13 @@ function setupSubEnvDropDown(_inList, _envDetails) {
   pickSubEnvBtn.type = "button";
   pickSubEnvBtn.classList = "btn btn-primary btn-block";
   pickSubEnvBtn.addEventListener("click", function() {
-    getServerListFromSubLBList(newList.value, subLBList, _envDetails);
+    currentSubEnv = newList.value;
+    getServerListFromSubLBList(currentSubEnv);
   });
   btnDivSubEnv.appendChild(pickSubEnvBtn);
 }
 
-function gotSubLBList(data, _envDetails) {
+function gotSubLBList(data) {
   subLBList = [];
   try {
     let masterLBResponse = JSON.parse(data);
@@ -493,14 +500,14 @@ function gotSubLBList(data, _envDetails) {
       subLB.splitServerType = subtext[4];
       subLB.splitLeg = subtext[5];
     }
-    setupSubEnvDropDown(subLBList, _envDetails);
+    setupSubEnvDropDown();
   } catch (err) {
     console.log("BAD Response from Master LB");
     console.log(err);
   }
 }
 
-function getServerListFromSubLBList(_selectedEnvName, _subLBList, _envDetails) {
+function getServerListFromSubLBList(_selectedEnvName) {
   lbServerList = [];
   requestCount = subLBList.length;
   replyCount = 0;
@@ -509,8 +516,8 @@ function getServerListFromSubLBList(_selectedEnvName, _subLBList, _envDetails) {
     if (subLB.splitEnvName == _selectedEnvName) {
       let subLBAddress =
         "http://" +
-        _envDetails.hostname +
-        _envDetails.endpoint +
+        currentMLB.hostname +
+        currentMLB.endpoint +
         "/" +
         subLB.name +
         "?statbindings=yes";
@@ -519,8 +526,8 @@ function getServerListFromSubLBList(_selectedEnvName, _subLBList, _envDetails) {
         gotSubServerList,
         subLBAddress,
         subLB,
-        _envDetails.username,
-        _envDetails.password
+        currentMLB.username,
+        currentMLB.password
       );
     }
   }
@@ -677,7 +684,7 @@ function updateServerResults(data, _server, timing) {
   drawMultiTables();
 }
 
-function postedMaint(response, action, err, server) {
+function postedMaint(response, action, err, _server) {
   let replyStatus;
   if (err) {
     replyStatus = "Error: " + err;
@@ -702,7 +709,18 @@ function postedMaint(response, action, err, server) {
     default:
       console.log("unknown reply", action);
   }
-  getServerDetails(server);
+
+  for (sv of serverList) {
+    if (sv == _server) {
+      console.log(sv);
+      sv.availability = "refreshing...";
+      sv.MLBState = "refreshing...";
+      sv.status = "refreshing...";
+    }
+  }
+
+  drawMultiTables();
+  setTimeout(getServerListFromSubLBList, 10000, currentSubEnv);
 }
 
 function maintMode(action, server) {
@@ -746,6 +764,11 @@ function maintMode(action, server) {
   console.log("end of function");
 }
 
+function whatDoesLBThinkOfThisServer(server) {
+  console.log(serverList, envTypeList, subLBList, lbServerList);
+  console.log(server);
+}
+
 class Server {
   constructor(name, hostname, port, endpoint) {
     this.name = name;
@@ -758,3 +781,7 @@ class Server {
     this.status = null;
   }
 }
+
+class MasterLB {}
+
+class SubLB {}

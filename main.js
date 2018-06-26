@@ -8,7 +8,7 @@ const fs = require("fs");
 let win;
 
 let envFile = __dirname + "/EnvTypeList.txt";
-let envTypeList = [];
+let masterLBList = [];
 
 app.on("ready", function() {
   // Create the browser window.
@@ -42,7 +42,7 @@ app.on("ready", function() {
   });
 
   win.once("ready-to-show", () => {
-    getEnvTypeList();
+    getMasterLBList();
     win.show();
   });
 
@@ -50,8 +50,8 @@ app.on("ready", function() {
   Menu.setApplicationMenu(winMenu);
 });
 
-function getEnvTypeList() {
-  envTypeList = [];
+function getMasterLBList() {
+  masterLBList = [];
   var data = fs.readFileSync(envFile).toString();
 
   let allTextLines = data.split(/\r\n|\n/);
@@ -61,20 +61,20 @@ function getEnvTypeList() {
     // split content based on comma
     let data = allTextLines[i].split(",");
     if (data.length == headers.length) {
-      let myEnv = new Env(
+      let myEnv = new MasterLB(
         data[0].replace(/['"]+/g, ""),
         data[1].replace(/['"]+/g, ""),
         data[2].replace(/['"]+/g, ""),
         data[3].replace(/['"]+/g, ""),
         data[4].replace(/['"]+/g, "")
       );
-      envTypeList.push(myEnv);
+      masterLBList.push(myEnv);
     }
   }
-  win.webContents.send("updateEnvTypeList", envTypeList);
+  win.webContents.send("updateMasterLBList", masterLBList);
 }
 
-class Env {
+class MasterLB {
   constructor(envname, hostname, endpoint, username, password) {
     this.envname = envname;
     this.hostname = hostname;
