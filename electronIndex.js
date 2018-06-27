@@ -733,7 +733,7 @@ function maintMode(action, server) {
         "https://" +
           server.hostname +
           ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode(int,boolean)",
-        "param=0&param=true&executed=true",
+        "param=0&param=false&executed=true",
         "Basic " + btoa("FT1Admin:changeme"),
         action,
         server
