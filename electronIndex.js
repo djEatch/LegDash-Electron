@@ -17,16 +17,17 @@ let sortOptions = { currentField: null, currentDir: -1 };
 const accordionContainer = document.querySelector("#accordionContainer");
 const modalDiv = document.querySelector("#modalDiv");
 
-// const fudgeButton = document.querySelector("#fudgeButton");
-// fudgeButton.addEventListener("click", fudgeFunction);
+const fudgeButton = document.querySelector("#fudgeButton");
+fudgeButton.addEventListener("click", fudgeFunction);
 
-// function fudgeFunction() {
-//   console.log("Clicked");
-//   whatDoesLBThinkOfThisServer(serverList[6]);
-//   //makeModal();
-//   //$('#collapseThree').collapse('hide')
-//   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
-// }
+function fudgeFunction() {
+  console.log("Clicked");
+  //whatDoesLBThinkOfThisServer(serverList[6]);
+  //makeModal();
+  //$('#collapseThree').collapse('hide')
+  //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
+  ipcRenderer.send('showServerWindow',serverList);
+}
 
 function makeModal(server) {
   modalDiv.innerHTML = "";

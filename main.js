@@ -50,6 +50,29 @@ app.on("ready", function() {
   Menu.setApplicationMenu(winMenu);
 });
 
+ipcMain.on('showServerWindow', function(e,data){
+  serverWin = new BrowserWindow({
+    show: false,
+    width: 800,
+    height: 600
+  });
+  serverWin.loadURL(
+    url.format({
+      pathname: path.join(__dirname, "serverWindow.html"),
+      protocol: "file:",
+      slashes: true
+    })
+  );
+  serverWin.on("closed", () => {
+    serverWin = null;
+  });
+
+  serverWin.once("ready-to-show", () => {
+    serverWin.webContents.send("showServerList", data);
+    serverWin.show();
+  });
+})
+
 function getMasterLBList() {
   masterLBList = [];
   var data = fs.readFileSync(envFile).toString();
