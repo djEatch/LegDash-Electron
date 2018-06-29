@@ -17,17 +17,17 @@ let sortOptions = { currentField: null, currentDir: -1 };
 const accordionContainer = document.querySelector("#accordionContainer");
 const modalDiv = document.querySelector("#modalDiv");
 
-const fudgeButton = document.querySelector("#fudgeButton");
-fudgeButton.addEventListener("click", fudgeFunction);
+// const fudgeButton = document.querySelector("#fudgeButton");
+// fudgeButton.addEventListener("click", fudgeFunction);
 
-function fudgeFunction() {
-  console.log("Clicked");
-  //whatDoesLBThinkOfThisServer(serverList[6]);
-  //makeModal();
-  //$('#collapseThree').collapse('hide')
-  //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
-  ipcRenderer.send('showServerWindow',serverList);
-}
+// function fudgeFunction() {
+//   console.log("Clicked");
+//   //whatDoesLBThinkOfThisServer(serverList[6]);
+//   //makeModal();
+//   //$('#collapseThree').collapse('hide')
+//   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
+//   ipcRenderer.send('showServerWindow',serverList);
+// }
 
 function makeModal(server) {
   modalDiv.innerHTML = "";
@@ -410,6 +410,10 @@ function setupEnvTypeList() {
     if (itemtoKill) {
       itemtoKill.parentNode.removeChild(itemtoKill);
     }
+    itemtoKill = document.querySelector("#showServersBtn");
+    if (itemtoKill) {
+      itemtoKill.parentNode.removeChild(itemtoKill);
+    }
     serverList = [];
 
     drawMultiTables();
@@ -428,6 +432,10 @@ function setupEnvTypeList() {
       itemtoKill.parentNode.removeChild(itemtoKill);
     }
     itemtoKill = document.querySelector("#dropDownSubEnv");
+    if (itemtoKill) {
+      itemtoKill.parentNode.removeChild(itemtoKill);
+    }
+    itemtoKill = document.querySelector("#showServersBtn");
     if (itemtoKill) {
       itemtoKill.parentNode.removeChild(itemtoKill);
     }
@@ -577,10 +585,25 @@ function processServers() {
   }
 
   serverList = lbServerList;
+  enableServerListButton();
   resetSort();
   sortData("name", "hostname");
   drawMultiTables();
   requestAllServerDetails();
+}
+
+function enableServerListButton() {
+  let btnDivShowServers = document.querySelector("#btnDivShowServers");
+  console.log(btnDivShowServers);
+  let showServersBtn = document.createElement("button");
+  showServersBtn.textContent = "Show Servers";
+  showServersBtn.type = "button";
+  showServersBtn.classList = "btn btn-primary btn-block";
+  showServersBtn.addEventListener("click", function() {
+    ipcRenderer.send('showServerWindow',serverList);
+  });
+  showServersBtn.id = "showServersBtn";
+  btnDivShowServers.appendChild(showServersBtn);
 }
 
 function requestAllServerDetails() {
