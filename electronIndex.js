@@ -339,7 +339,7 @@ function getRowStyle(server) {
   if (server.ASMleg == "querying...") {
     //no results yet as it's querying
     return { colour: "outline-warning", text: "retry" };
-  } else if (server.ASMleg.includes(server.LBLeg)) {
+  } else if (server.ASMleg.toUpperCase() == server.LBLeg.toUpperCase()) {
     // matching LB ASMleg to ASM Leg
     if (server.availability == "true") {
       if (server.state == "UP") {
@@ -689,7 +689,7 @@ function updateServerResults(data, _server, timing) {
       server.response = data;
       server.responseTime = timing;
       try {
-        server.ASMleg = JSON.parse(data).status.label;
+        server.ASMleg = JSON.parse(data).status.label.replace(/^Leg/,'');
       } catch (e) {
         server.ASMleg = data;
       }
