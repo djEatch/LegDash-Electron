@@ -95,12 +95,16 @@ function makeModal(server) {
   mbody.appendChild(h);
 
   let setMaintBtn = document.createElement("button");
+  let setMaintDelayBtn = document.createElement("button");
   let unsetMaintBtn = document.createElement("button");
   setMaintBtn.id = "setMaintBtn";
+  setMaintDelayBtn.id = "setMaintDelayBtn";
   unsetMaintBtn.id = "unsetMaintBtn";
   setMaintBtn.textContent = "Set Maintenance Mode";
+  setMaintDelayBtn.textContent = "Set Maintenance Mode (DELAY)";
   unsetMaintBtn.textContent = "Unset Maintenance Mode";
   setMaintBtn.classList = "btn btn-secondary";
+  setMaintDelayBtn.classList = "btn btn-secondary";
   unsetMaintBtn.classList = "btn btn-secondary";
 
   //setMaintBtn.setAttribute("data-toggle", "popover");
@@ -109,11 +113,15 @@ function makeModal(server) {
   setMaintBtn.addEventListener("click", () => {
     maintMode("SET", server);
   });
+  setMaintDelayBtn.addEventListener("click", () => {
+    maintMode("SET", server, 180);
+  });
   unsetMaintBtn.addEventListener("click", () => {
     maintMode("UNSET", server);
   });
 
   mfoot.insertBefore(setMaintBtn, mfootbtn);
+  mfoot.insertBefore(setMaintDelayBtn, mfootbtn);
   mfoot.insertBefore(unsetMaintBtn, mfootbtn);
 
   $("#myModal").modal("show");
@@ -264,6 +272,7 @@ function drawMultiTables() {
     let cell7 = row.insertCell();
     let cell8 = row.insertCell();
     let cell9 = row.insertCell();
+    let cellConnCount = row.insertCell();
 
     // Add some bold text in the new cell:
     cell1.innerHTML = "<b>Name</b>";
@@ -273,11 +282,12 @@ function drawMultiTables() {
     });
     cell3.innerHTML = "<b>ASM Leg</b>";
     cell4.innerHTML = "<b>ASM Status</b>";
-    cell5.innerHTML = "<b>ASM Availability</b>";
+    cell5.innerHTML = "<b>ASM Avail.</b>";
     cell6.innerHTML = "<b>LB State</b>";
     cell7.innerHTML = "<b>LB Leg</b>";
-    cell8.innerHTML = "<b>Response Time</b>";
+    cell8.innerHTML = "<b>Res. Time</b>";
     cell9.innerHTML = "<b>Retry</b>";
+    cellConnCount.innerHTML = "<b>Con. Count</b>";
 
     for (server of serverList) {
       if (server.LBName == currentLB.name) {
@@ -291,6 +301,7 @@ function drawMultiTables() {
         let cell7 = row.insertCell();
         let cell8 = row.insertCell();
         let cellbtn = row.insertCell();
+        let cellConnCount = row.insertCell();
         cell1.innerHTML = server.name;
         cell2.innerHTML = server.hostname + ":" + server.port;
         cell2.setAttribute("data-server-name", server.name);
@@ -312,6 +323,7 @@ function drawMultiTables() {
         cell6.innerHTML = server.state;
         cell7.innerHTML = server.LBLeg;
         cell8.innerHTML = server.responseTime;
+        cellConnCount.innerHTML = server.cursrvrconnections;
 
         let refButton = document.createElement("button");
         refButton.textContent = "refresh";
@@ -344,7 +356,10 @@ function getRowStyle(server) {
     if (server.availability == "true") {
       if (server.state == "UP") {
         return { colour: "success", text: "refresh" };
-      } else if (server.state == "DOWN") {
+      } else if (
+        server.state == "DOWN" ||
+        server.state == "DOWN WHEN GOING OUT OF SERVICE"
+      ) {
         return { colour: "danger", text: "refresh" };
       } else {
         return { colour: "warning", text: "refresh" };
@@ -352,7 +367,10 @@ function getRowStyle(server) {
     } else if (server.availability != "true") {
       if (server.state == "UP") {
         return { colour: "warning", text: "refresh" };
-      } else if (server.state == "DOWN") {
+      } else if (
+        server.state == "DOWN" ||
+        server.state == "DOWN WHEN GOING OUT OF SERVICE"
+      ) {
         return { colour: "danger", text: "refresh" };
       } else {
         return { colour: "warning", text: "refresh" };
@@ -594,13 +612,13 @@ function processServers() {
 
 function enableServerListButton() {
   let btnDivShowServers = document.querySelector("#btnDivShowServers");
-  console.log(btnDivShowServers);
+  btnDivShowServers.innerHTML = "";
   let showServersBtn = document.createElement("button");
   showServersBtn.textContent = "Show Servers";
   showServersBtn.type = "button";
-  showServersBtn.classList = "btn btn-primary btn-block";
+  showServersBtn.classList = "btn btn-secondary btn-block";
   showServersBtn.addEventListener("click", function() {
-    ipcRenderer.send('showServerWindow',serverList);
+    ipcRenderer.send("showServerWindow", serverList);
   });
   showServersBtn.id = "showServersBtn";
   btnDivShowServers.appendChild(showServersBtn);
@@ -663,9 +681,9 @@ function getRequest(callback, url, id, username, password) {
   };
 }
 
-function postRequest(callback, url, args, auth, action, server) {
+function postRequest(callback, url, args, auth, action, server, timeout) {
   var xhr = new XMLHttpRequest();
-
+  //console.log(url, args);
   xhr.open("POST", url, true);
   xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   if (auth) {
@@ -674,7 +692,7 @@ function postRequest(callback, url, args, auth, action, server) {
   xhr.send(args);
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4 && xhr.status == 200) {
-      callback(xhr.responseText, action, null, server);
+      callback(xhr.responseText, action, null, server, timeout);
     }
     if (xhr.readyState == 4 && xhr.status != 200) {
       callback(xhr.responseText, action, xhr.status, server);
@@ -689,7 +707,7 @@ function updateServerResults(data, _server, timing) {
       server.response = data;
       server.responseTime = timing;
       try {
-        server.ASMleg = JSON.parse(data).status.label.replace(/^Leg/,'');
+        server.ASMleg = JSON.parse(data).status.label.replace(/^Leg/, "");
       } catch (e) {
         server.ASMleg = data;
       }
@@ -708,7 +726,7 @@ function updateServerResults(data, _server, timing) {
   drawMultiTables();
 }
 
-function postedMaint(response, action, err, _server) {
+function postedMaint(response, action, err, _server, timeout) {
   let replyStatus;
   if (err) {
     replyStatus = "Error: " + err;
@@ -721,9 +739,18 @@ function postedMaint(response, action, err, _server) {
   console.log(replyStatus);
   switch (action) {
     case "SET":
-      $("#setMaintBtn").popover("dispose");
-      $("#setMaintBtn").popover({ content: replyStatus, trigger: "focus" });
-      $("#setMaintBtn").popover("show");
+      if (timeout > 0) {
+        $("#setMaintDelayBtn").popover("dispose");
+        $("#setMaintDelayBtn").popover({
+          content: replyStatus,
+          trigger: "focus"
+        });
+        $("#setMaintDelayBtn").popover("show");
+      } else {
+        $("#setMaintBtn").popover("dispose");
+        $("#setMaintBtn").popover({ content: replyStatus, trigger: "focus" });
+        $("#setMaintBtn").popover("show");
+      }
       break;
     case "UNSET":
       $("#unsetMaintBtn").popover("dispose");
@@ -745,22 +772,29 @@ function postedMaint(response, action, err, _server) {
 
   drawMultiTables();
   setTimeout(getServerListFromSubLBList, 10000, currentSubEnv);
+  if (timeout > 0) {
+    setTimeout(getServerListFromSubLBList, 1000 * timeout, currentSubEnv);
+  }
 }
 
-function maintMode(action, server) {
+function maintMode(action, server, timeoutSeconds) {
   //gbrpmsuisf01.corp.internal
 
   switch (action.toUpperCase()) {
     case "SET": {
+      if (!timeoutSeconds) {
+        timeoutSeconds = 0;
+      }
       postRequest(
         postedMaint,
         "https://" +
           server.hostname +
           ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode(int,boolean)",
-        "param=0&param=false&executed=true",
+        "param=" + timeoutSeconds + "&param=false&executed=true",
         "Basic " + btoa("FT1Admin:changeme"),
         action,
-        server
+        server,
+        timeoutSeconds
       );
       // https://gbrpmsuisf01.corp.internal:8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode%28int%2Cboolean%29
       console.log(action, server);
