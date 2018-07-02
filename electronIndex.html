@@ -5,7 +5,7 @@
     <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="bootstrap.min.css">
     <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"> -->
-    
+
     <!-- this line removes any default padding and style. you might only need one of these values set. -->
     <style>
         body {
@@ -18,7 +18,28 @@
 
 <body>
 
-    <div class="container-fluid" style="margin-top: 10px; margin-bottom:10px">
+    <div>
+        <nav class="navbar fixed-top navbar-light bg-light">
+
+                    <div class="col-md-3" id="dropDownDivEnvType"></div>
+                    <div class="col-md-2" id="btnDivEnvType"></div>
+                    <div class="col-md-3" id="dropDownDivSubEnv"></div>
+                    <div class="col-md-2" id="btnDivSubEnv"></div>
+                    <div class="col-md-2" id="btnDivShowServers"></div>
+
+                <!-- <div class="row">
+                    <div class="col-md-12">
+                    </div>
+                </div> -->
+                <!-- <div class="row">
+                    <div class="col-md-12">
+                        <button id="fudgeButton" class="btn btn-primary btn-block">FUDGE BUTTON</button>
+                    </div>
+                </div> -->
+        </nav>
+    </div>
+
+    <!-- <div class="container-fluid" style="margin-top: 10px; margin-bottom:10px">
         <div class="row">
             <div class="col-md-3" id="dropDownDivEnvType"></div>
             <div class="col-md-2" id="btnDivEnvType"></div>
@@ -26,34 +47,45 @@
             <div class="col-md-2" id="btnDivSubEnv"></div>
             <div class="col-md-2" id="btnDivShowServers"></div>
         </div>
-        <!-- <div class="row">
+        <div class="row">
             <div class="col-md-12">
             </div>
-        </div> -->
-        <!-- <div class="row">
+        </div>
+        <div class="row">
             <div class="col-md-12">
                 <button id="fudgeButton" class="btn btn-primary btn-block">FUDGE BUTTON</button>
             </div>
-        </div> -->
+        </div>
+    </div> -->
+    <div style="height:40px">
+
     </div>
 
     <div id="accordionContainer">
 
     </div>
-    <div class="container-fluid">
+    <!-- <div class="container-fluid">
         <div class="row">
             <div class="col-md-12" id="refreshDiv" style="margin-top: 10px; margin-bottom:10px">
             </div>
         </div>
-    </div>
+    </div> -->
 
 
     <div id="modalDiv">
 
     </div>
+    <div style="height:40px">
 
+    </div>
+    <div>
+        <nav class="navbar fixed-bottom navbar-light bg-light">
+            <div class="col-md-12" id="refreshDiv" style="margin-top: 10px; margin-bottom:10px">
+            </div>
+        </nav>
+    </div>
     <script src="./electronIndex.js"></script>
-    
+
 </body>
 
 </html>
