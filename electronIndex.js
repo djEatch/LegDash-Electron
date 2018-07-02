@@ -106,6 +106,9 @@ function makeModal(server) {
   setMaintBtn.classList = "btn btn-secondary";
   setMaintDelayBtn.classList = "btn btn-secondary";
   unsetMaintBtn.classList = "btn btn-secondary";
+  setMaintBtn.setAttribute("data-placement","bottom");
+  setMaintDelayBtn.setAttribute("data-placement","bottom");
+  unsetMaintBtn.setAttribute("data-placement","bottom");
 
   //setMaintBtn.setAttribute("data-toggle", "popover");
   //unsetMaintBtn.setAttribute("data-toggle", "popover");
