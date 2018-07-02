@@ -95,19 +95,21 @@ function makeModal(server) {
   mbody.appendChild(h);
 
   let setMaintBtn = document.createElement("button");
-  let setMaintDelayBtn = document.createElement("button");
-  let unsetMaintBtn = document.createElement("button");
   setMaintBtn.id = "setMaintBtn";
-  setMaintDelayBtn.id = "setMaintDelayBtn";
-  unsetMaintBtn.id = "unsetMaintBtn";
   setMaintBtn.textContent = "Set Maintenance Mode";
-  setMaintDelayBtn.textContent = "Set Maintenance Mode (DELAY)";
-  unsetMaintBtn.textContent = "Unset Maintenance Mode";
   setMaintBtn.classList = "btn btn-secondary";
-  setMaintDelayBtn.classList = "btn btn-secondary";
-  unsetMaintBtn.classList = "btn btn-secondary";
   setMaintBtn.setAttribute("data-placement","bottom");
+
+  let setMaintDelayBtn = document.createElement("button");
+  setMaintDelayBtn.id = "setMaintDelayBtn";
+  setMaintDelayBtn.textContent = "Set Maintenance Mode (DELAY)";
+  setMaintDelayBtn.classList = "btn btn-secondary";
   setMaintDelayBtn.setAttribute("data-placement","bottom");
+
+  let unsetMaintBtn = document.createElement("button");
+  unsetMaintBtn.id = "unsetMaintBtn";  
+  unsetMaintBtn.textContent = "Unset Maintenance Mode";  
+  unsetMaintBtn.classList = "btn btn-secondary";  
   unsetMaintBtn.setAttribute("data-placement","bottom");
 
   //setMaintBtn.setAttribute("data-toggle", "popover");
@@ -731,12 +733,15 @@ function updateServerResults(data, _server, timing) {
 
 function postedMaint(response, action, err, _server, timeout) {
   let replyStatus;
+  let replyTitle;
   if (err) {
-    replyStatus = "Error: " + err;
+    replyTitle = "Error: " + err;
+    replyStatus = "Error " + err + " occured. Please try again later, if the error persists please contact support."
   } else {
     let parser = new DOMParser();
     let reply = parser.parseFromString(response, "text/html");
-    replyStatus = reply.getElementById("fade").textContent;
+    replyTitle = "Success"
+    replyStatus = "The action " + action + " has complested successfully and returned the following response: " + reply.getElementById("fade").textContent;
     console.log(reply);
   }
   console.log(replyStatus);
@@ -745,19 +750,20 @@ function postedMaint(response, action, err, _server, timeout) {
       if (timeout > 0) {
         $("#setMaintDelayBtn").popover("dispose");
         $("#setMaintDelayBtn").popover({
+          title: replyTitle,
           content: replyStatus,
           trigger: "focus"
         });
         $("#setMaintDelayBtn").popover("show");
       } else {
         $("#setMaintBtn").popover("dispose");
-        $("#setMaintBtn").popover({ content: replyStatus, trigger: "focus" });
+        $("#setMaintBtn").popover({ title: replyTitle,content: replyStatus, trigger: "focus" });
         $("#setMaintBtn").popover("show");
       }
       break;
     case "UNSET":
       $("#unsetMaintBtn").popover("dispose");
-      $("#unsetMaintBtn").popover({ content: replyStatus, trigger: "focus" });
+      $("#unsetMaintBtn").popover({ title: replyTitle,content: replyStatus, trigger: "focus" });
       $("#unsetMaintBtn").popover("show");
       break;
     default:
