@@ -494,6 +494,35 @@ function getMasterLBForEnvType(_envType) {
   return false;
 }
 
+function humanEnvName(envText){
+
+  switch(envText.toLowerCase()){
+    case "f00":
+    return "FT1";
+    case "f10":
+    return "FT2";
+    case "f20":
+    return "FT3";
+    case "f30":
+    return "FT4";
+    case "f40":
+    return "FT5";
+    case "i00":
+    return "IT1";
+    case "i10":
+    return "IT2";
+    case "i20":
+    return "IT3";
+    case "i30":
+    return "IT4";
+    case "i40":
+    return "IT5";
+    default:
+    return envText;
+  }
+
+}
+
 function setupSubEnvDropDown() {
   dropDownDivSubEnv = document.querySelector("#dropDownDivSubEnv");
   let newList = document.createElement("select");
@@ -503,7 +532,7 @@ function setupSubEnvDropDown() {
   }
   tempEnvList = tempEnvList.filter(onlyUnique);
   for (env of tempEnvList) {
-    newList.appendChild(new Option(env, env));
+    newList.appendChild(new Option(humanEnvName(env), env));
   }
   newList.classList = "w-100 btn btn-secondary dropdown-toggle";
   dropDownDivSubEnv.appendChild(newList);
