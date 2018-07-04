@@ -6,7 +6,8 @@ var $ = require("jquery");
 let serverList = [];
 let envTypeList;
 let masterLBList = [];
-let subLBList = [];
+let fullSubLBList = [];
+let currentSubLBList = [];
 let currentMLB;
 let currentSubEnv;
 let lbServerList = [];
@@ -98,19 +99,19 @@ function makeModal(server) {
   setMaintBtn.id = "setMaintBtn";
   setMaintBtn.textContent = "Set Maintenance Mode";
   setMaintBtn.classList = "btn btn-secondary";
-  setMaintBtn.setAttribute("data-placement","bottom");
+  setMaintBtn.setAttribute("data-placement", "bottom");
 
   let setMaintDelayBtn = document.createElement("button");
   setMaintDelayBtn.id = "setMaintDelayBtn";
   setMaintDelayBtn.textContent = "Set Maintenance Mode (DELAY)";
   setMaintDelayBtn.classList = "btn btn-secondary";
-  setMaintDelayBtn.setAttribute("data-placement","bottom");
+  setMaintDelayBtn.setAttribute("data-placement", "bottom");
 
   let unsetMaintBtn = document.createElement("button");
-  unsetMaintBtn.id = "unsetMaintBtn";  
-  unsetMaintBtn.textContent = "Unset Maintenance Mode";  
-  unsetMaintBtn.classList = "btn btn-secondary";  
-  unsetMaintBtn.setAttribute("data-placement","bottom");
+  unsetMaintBtn.id = "unsetMaintBtn";
+  unsetMaintBtn.textContent = "Unset Maintenance Mode";
+  unsetMaintBtn.classList = "btn btn-secondary";
+  unsetMaintBtn.setAttribute("data-placement", "bottom");
 
   //setMaintBtn.setAttribute("data-toggle", "popover");
   //unsetMaintBtn.setAttribute("data-toggle", "popover");
@@ -182,7 +183,7 @@ function sortData(field, field2) {
 function drawMultiTables() {
   let tempLBList = [];
 
-  tempLBList = subLBList;
+  tempLBList = currentSubLBList;
   tempLBList.sort(function(a, b) {
     x = a.name;
     y = b.name;
@@ -438,7 +439,7 @@ function setupEnvTypeList() {
       itemtoKill.parentNode.removeChild(itemtoKill);
     }
     serverList = [];
-
+    disableServerListButton();
     drawMultiTables();
   });
   newList.classList = "w-100 btn btn-secondary dropdown-toggle";
@@ -497,7 +498,7 @@ function setupSubEnvDropDown() {
   dropDownDivSubEnv = document.querySelector("#dropDownDivSubEnv");
   let newList = document.createElement("select");
   let tempEnvList = [];
-  for (item of subLBList) {
+  for (item of fullSubLBList) {
     tempEnvList.push(item.splitEnvName);
   }
   tempEnvList = tempEnvList.filter(onlyUnique);
@@ -507,6 +508,11 @@ function setupSubEnvDropDown() {
   newList.classList = "w-100 btn btn-secondary dropdown-toggle";
   dropDownDivSubEnv.appendChild(newList);
   newList.id = "dropDownSubEnv";
+  newList.addEventListener("change", function() {
+    serverList = [];
+    disableServerListButton();
+    drawMultiTables();
+  })
 
   btnDivSubEnv = document.querySelector("#btnDivSubEnv");
   let pickSubEnvBtn = document.createElement("button");
@@ -522,11 +528,11 @@ function setupSubEnvDropDown() {
 }
 
 function gotSubLBList(data) {
-  subLBList = [];
+  fullSubLBList = [];
   try {
     let masterLBResponse = JSON.parse(data);
-    subLBList = masterLBResponse.lbvserver;
-    for (subLB of subLBList) {
+    fullSubLBList = masterLBResponse.lbvserver;
+    for (subLB of fullSubLBList) {
       subtext = subLB.name.split("-");
       subLB.splitEnvName = subtext[6].substr(-3);
       subLB.splitServerType = subtext[4];
@@ -541,10 +547,17 @@ function gotSubLBList(data) {
 
 function getServerListFromSubLBList(_selectedEnvName) {
   lbServerList = [];
-  requestCount = subLBList.length;
+  requestCount = 0; //subLBList.length;
   replyCount = 0;
+  currentSubLBList = [];
+  for (subLB of fullSubLBList) {
+    if (subLB.splitEnvName == _selectedEnvName) {
+      requestCount++;
+      currentSubLBList.push(subLB);
+    }
+  }
 
-  for (subLB of subLBList) {
+  for (subLB of currentSubLBList) {
     if (subLB.splitEnvName == _selectedEnvName) {
       let subLBAddress =
         "http://" +
@@ -613,6 +626,11 @@ function processServers() {
   sortData("name", "hostname");
   drawMultiTables();
   requestAllServerDetails();
+}
+
+function disableServerListButton(){
+  let btnDivShowServers = document.querySelector("#btnDivShowServers");
+  btnDivShowServers.innerHTML = "";
 }
 
 function enableServerListButton() {
@@ -736,12 +754,19 @@ function postedMaint(response, action, err, _server, timeout) {
   let replyTitle;
   if (err) {
     replyTitle = "Error: " + err;
-    replyStatus = "Error " + err + " occured. Please try again later, if the error persists please contact support."
+    replyStatus =
+      "Error " +
+      err +
+      " occured. Please try again later, if the error persists please contact support.";
   } else {
     let parser = new DOMParser();
     let reply = parser.parseFromString(response, "text/html");
-    replyTitle = "Success"
-    replyStatus = "The action " + action + " has complested successfully and returned the following response: " + reply.getElementById("fade").textContent;
+    replyTitle = "Success";
+    replyStatus =
+      "The action " +
+      action +
+      " has complested successfully and returned the following response: " +
+      reply.getElementById("fade").textContent;
     console.log(reply);
   }
   console.log(replyStatus);
@@ -757,13 +782,21 @@ function postedMaint(response, action, err, _server, timeout) {
         $("#setMaintDelayBtn").popover("show");
       } else {
         $("#setMaintBtn").popover("dispose");
-        $("#setMaintBtn").popover({ title: replyTitle,content: replyStatus, trigger: "focus" });
+        $("#setMaintBtn").popover({
+          title: replyTitle,
+          content: replyStatus,
+          trigger: "focus"
+        });
         $("#setMaintBtn").popover("show");
       }
       break;
     case "UNSET":
       $("#unsetMaintBtn").popover("dispose");
-      $("#unsetMaintBtn").popover({ title: replyTitle,content: replyStatus, trigger: "focus" });
+      $("#unsetMaintBtn").popover({
+        title: replyTitle,
+        content: replyStatus,
+        trigger: "focus"
+      });
       $("#unsetMaintBtn").popover("show");
       break;
     default:
@@ -832,7 +865,7 @@ function maintMode(action, server, timeoutSeconds) {
 }
 
 function whatDoesLBThinkOfThisServer(server) {
-  console.log(serverList, envTypeList, subLBList, lbServerList);
+  console.log(serverList, envTypeList, fullSubLBList, lbServerList);
   console.log(server);
 }
 
