@@ -531,6 +531,7 @@ function setupSubEnvDropDown() {
     tempEnvList.push(item.splitEnvName);
   }
   tempEnvList = tempEnvList.filter(onlyUnique);
+  tempEnvList.sort();
   for (env of tempEnvList) {
     newList.appendChild(new Option(humanEnvName(env), env));
   }
