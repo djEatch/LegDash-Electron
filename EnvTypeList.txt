@@ -1,0 +1,3 @@
+EnvironmentType, LBAddress, endpoint, username, password
+"PROD","10.141.129.210","/nitro/v1/stat/lbvserver","ColumbusAPI_RO","Ph$rmAC4P!"
+"TEST","10.141.129.210","/nitro/v1/stat/lbvserver","ColumbusAPI_RO","Ph$rmAC4P!"

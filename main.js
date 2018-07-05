@@ -1,90 +1,112 @@
-const {app, BrowserWindow, Menu, ipcMain} = require('electron')
-const path = require('path')
-const url = require('url')
-
+const { app, BrowserWindow, Menu, ipcMain } = require("electron");
+const path = require("path");
+const url = require("url");
 const fs = require("fs");
-const http = require("http");
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
-let contents;
 
-let serverList = [];
-let csvUrl = __dirname + '/servers.txt';  // URL to web API
+let envFile = __dirname + "/EnvTypeList.txt";
+let masterLBList = [];
 
-//app.on('ready', () => {readCsvData(), createWindow()})
-app.on('ready', function(){
-
-    // Create the browser window.
-  win = new BrowserWindow({show: false, width: 800, height: 600})
+app.on("ready", function() {
+  // Create the browser window.
+  win = new BrowserWindow({
+    show: false,
+    width: 800,
+    height: 600,
+    webSecurity: true// ,
+    // webPreferences: {
+    //   //nodeIntegration: false
+    //   //preload: path.join(__dirname, 'electronIndex.js'),
+    //   contextIsolation: true
+    // }
+  });
 
   // and load the index.html of the app.
-  win.loadURL(url.format({
-    //pathname: path.join(__dirname, 'public','index.html'),
-    pathname: path.join(__dirname, 'electronIndex.html'),
-    protocol: 'file:',
-    slashes: true
-  }))
+  win.loadURL(
+    url.format({
+      pathname: path.join(__dirname, "electronIndex.html"),
+      protocol: "file:",
+      slashes: true
+    })
+  );
 
   // Emitted when the window is closed.
-  win.on('closed', () => {
+  win.on("closed", () => {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
-    win = null
-  })
+    win = null;
+  });
 
-  win.once('ready-to-show', () => {
-    loadData();
-    win.show()
-  })
-
+  win.once("ready-to-show", () => {
+    getMasterLBList();
+    win.show();
+  });
 
   const winMenu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(winMenu);
-  
-  contents = win.webContents;
-
 });
 
+ipcMain.on('showServerWindow', function(e,data){
+  serverWin = new BrowserWindow({
+    show: false,
+    width: 800,
+    height: 600
+  });
+  serverWin.loadURL(
+    url.format({
+      pathname: path.join(__dirname, "serverWindow.html"),
+      protocol: "file:",
+      slashes: true
+    })
+  );
+  serverWin.on("closed", () => {
+    serverWin = null;
+  });
 
-function loadData(){
-  serverList = [];
-  var data = fs.readFileSync(csvUrl).toString();
+  serverWin.once("ready-to-show", () => {
+    serverWin.webContents.send("showServerList", data);
+    serverWin.show();
+  });
+})
+
+function getMasterLBList() {
+  masterLBList = [];
+  var data = fs.readFileSync(envFile).toString();
 
   let allTextLines = data.split(/\r\n|\n/);
-  let headers = allTextLines[0].split(',');
-  let lines = [];
+  let headers = allTextLines[0].split(",");
 
-  for ( let i = 1; i < allTextLines.length; i++) {
-      // split content based on comma
-      let data = allTextLines[i].split(',');
-      if (data.length == headers.length) {
-          let myServer = new Server(data[0].replace(/['"]+/g, ''),data[1].replace(/['"]+/g, ''),data[2].replace(/['"]+/g, ''),data[3].replace(/['"]+/g, ''));
-          serverList.push(myServer);
-      }
+  for (let i = 1; i < allTextLines.length; i++) {
+    // split content based on comma
+    let data = allTextLines[i].split(",");
+    if (data.length == headers.length) {
+      let myEnv = new MasterLB(
+        data[0].replace(/['"]+/g, ""),
+        data[1].replace(/['"]+/g, ""),
+        data[2].replace(/['"]+/g, ""),
+        data[3].replace(/['"]+/g, ""),
+        data[4].replace(/['"]+/g, "")
+      );
+      masterLBList.push(myEnv);
+    }
   }
-
-  win.webContents.send('updateServerList',serverList);
+  win.webContents.send("updateMasterLBList", masterLBList);
 }
 
-ipcMain.on('refreshList', loadData);
-
-class Server {
-
-  constructor(name, hostname, port, endpoint) {
-    this.name = name;
+class MasterLB {
+  constructor(envname, hostname, endpoint, username, password) {
+    this.envname = envname;
     this.hostname = hostname;
-    this.port = port;
     this.endpoint = endpoint;
-    this.response = null;
-    this.leg = null;
-    this.availability = null;
-    this.status = null;
+    this.username = username;
+    this.password = password;
   }
 }
-  
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -92,127 +114,136 @@ class Server {
 //app.on('ready', createWindow)
 
 // Quit when all windows are closed.
-app.on('window-all-closed', () => {
+app.on("window-all-closed", () => {
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit()
+  if (process.platform !== "darwin") {
+    app.quit();
   }
-})
+});
 
-app.on('activate', () => {
+app.on("activate", () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (win === null) {
-    createWindow()
+    createWindow();
+  }
+});
+
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+
+  let regEx =  new RegExp("^https:\/\/.+corp.internal:");
+  let res = regEx.exec(url);
+  if (res) {
+    // Verification logic.
+    event.preventDefault()
+    callback(true)
+  } else {
+    callback(false)
   }
 })
-  
 
 const template = [
   {
-    label: 'Edit',
-    submenu: [
-      {        role: 'copy'      },
-      {        role: 'selectall'      }
-    ]
+    label: "Edit",
+    submenu: [{ role: "copy" }, { role: "selectall" }]
   },
   {
-    label: 'View',
+    label: "View",
     submenu: [
       {
-        label: 'Reload',
-        accelerator: 'CmdOrCtrl+R',
-        click (item, focusedWindow) {
-          if (focusedWindow) focusedWindow.reload()
+        label: "Reload",
+        accelerator: "CmdOrCtrl+R",
+        click(item, focusedWindow) {
+          if (focusedWindow) focusedWindow.reload();
         }
       },
       {
-        label: 'Toggle Developer Tools',
-        accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
-        click (item, focusedWindow) {
-          if (focusedWindow) focusedWindow.webContents.toggleDevTools()
+        label: "Toggle Developer Tools",
+        accelerator:
+          process.platform === "darwin" ? "Alt+Command+I" : "Ctrl+Shift+I",
+        click(item, focusedWindow) {
+          if (focusedWindow) focusedWindow.webContents.toggleDevTools();
         }
       },
-      {        type: 'separator'      },
-      {        role: 'resetzoom'      },
-      {        role: 'zoomin'      },
-      {        role: 'zoomout'      },
-      {        type: 'separator'      },
-      {        role: 'togglefullscreen'      }
+      { type: "separator" },
+      { role: "resetzoom" },
+      { role: "zoomin" },
+      { role: "zoomout" },
+      { type: "separator" },
+      { role: "togglefullscreen" }
     ]
   },
   {
-    role: 'window',
-    submenu: [
-      {        role: 'minimize'      },
-      {        role: 'close'      }
-    ]
+    role: "window",
+    submenu: [{ role: "minimize" }, { role: "close" }]
   },
   {
-    role: 'help',
+    role: "help",
     submenu: [
       {
-        label: 'Learn More',
-        click () { require('electron').shell.openExternal('http://electron.atom.io') }
+        label: "Learn More",
+        click() {
+          require("electron").shell.openExternal("http://electron.atom.io");
+        }
       }
     ]
   }
-]
+];
 
-if (process.platform === 'darwin') {
-  const name = app.getName()
+if (process.platform === "darwin") {
+  const name = app.getName();
   template.unshift({
     label: name,
     submenu: [
-      {        role: 'about'      },
-      {        type: 'separator'      },
-      {        role: 'services', submenu: []},
-      {        type: 'separator'      },
-      {        role: 'hide'      },
-      {        role: 'hideothers'      },
-      {        role: 'unhide'      },
-      {        type: 'separator'      },
-      {        role: 'quit'      }
+      { role: "about" },
+      { type: "separator" },
+      { role: "services", submenu: [] },
+      { type: "separator" },
+      { role: "hide" },
+      { role: "hideothers" },
+      { role: "unhide" },
+      { type: "separator" },
+      { role: "quit" }
     ]
-  })
+  });
   // Edit menu.
   template[1].submenu.push(
-    {      type: 'separator'    },
-    {      label: 'Speech',
+    { type: "separator" },
+    {
+      label: "Speech",
       submenu: [
         {
-          role: 'startspeaking'
+          role: "startspeaking"
         },
         {
-          role: 'stopspeaking'
+          role: "stopspeaking"
         }
       ]
     }
-  )
+  );
   // Window menu.
   template[3].submenu = [
     {
-      label: 'Close',
-      accelerator: 'CmdOrCtrl+W',
-      role: 'close'
+      label: "Close",
+      accelerator: "CmdOrCtrl+W",
+      role: "close"
     },
     {
-      label: 'Minimize',
-      accelerator: 'CmdOrCtrl+M',
-      role: 'minimize'
+      label: "Minimize",
+      accelerator: "CmdOrCtrl+M",
+      role: "minimize"
     },
     {
-      label: 'Zoom',
-      role: 'zoom'
+      label: "Zoom",
+      role: "zoom"
     },
     {
-      type: 'separator'
+      type: "separator"
     },
     {
-      label: 'Bring All to Front',
-      role: 'front'
+      label: "Bring All to Front",
+      role: "front"
     }
-  ]
+  ];
 }
-

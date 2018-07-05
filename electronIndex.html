@@ -1,283 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+<head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="bootstrap.min.css">
     <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"> -->
-    
-    <!-- this line removes any default padding and style. you might only need one of these values set. -->
-    <style> body {padding: 0; margin: 0;} </style>
-    
-    </head>
 
-    <body>
-        <div class="container-fluid">
+    <!-- this line removes any default padding and style. you might only need one of these values set. -->
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div>
+        <nav class="navbar fixed-top navbar-light bg-light">
+
+                    <div class="col-md-3" id="dropDownDivEnvType"></div>
+                    <div class="col-md-2" id="btnDivEnvType"></div>
+                    <div class="col-md-3" id="dropDownDivSubEnv"></div>
+                    <div class="col-md-2" id="btnDivSubEnv"></div>
+                    <div class="col-md-2" id="btnDivShowServers"></div>
+
+                <!-- <div class="row">
+                    <div class="col-md-12">
+                    </div>
+                </div> -->
+                <!-- <div class="row">
+                    <div class="col-md-12">
+                        <button id="fudgeButton" class="btn btn-primary btn-block">FUDGE BUTTON</button>
+                    </div>
+                </div> -->
+        </nav>
+    </div>
+
+    <!-- <div class="container-fluid" style="margin-top: 10px; margin-bottom:10px">
         <div class="row">
-            <div class="table-responsive">
-            <table id="serverTable" class="table table-light table-hover">
-                <thead class="thead-dark">
-                    <td onclick="sortData('name','hostname')">Name</td>
-                    <td onclick="sortData('hostname','name')">Hostname</td>
-                    <!-- <td>Endpoint</td> -->
-                    <td onclick="sortData('leg','name')">Leg</td>
-                    <td onclick="sortData('status','name')">Status</td>
-                    <td onclick="sortData('availability','name')">Availability</td>
-                    <td>Retry</td>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
+            <div class="col-md-3" id="dropDownDivEnvType"></div>
+            <div class="col-md-2" id="btnDivEnvType"></div>
+            <div class="col-md-3" id="dropDownDivSubEnv"></div>
+            <div class="col-md-2" id="btnDivSubEnv"></div>
+            <div class="col-md-2" id="btnDivShowServers"></div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
             </div>
         </div>
         <div class="row">
             <div class="col-md-12">
-                <button id="refreshButton" class="btn btn-primary btn-block">refresh all</button>
+                <button id="fudgeButton" class="btn btn-primary btn-block">FUDGE BUTTON</button>
             </div>
         </div>
+    </div> -->
+    <div style="height:50px">
+
+    </div>
+
+    <div id="accordionContainer">
+
+    </div>
+    <!-- <div class="container-fluid">
         <div class="row">
-            <div id="canvasDiv">
-            
+            <div class="col-md-12" id="refreshDiv" style="margin-top: 10px; margin-bottom:10px">
             </div>
         </div>
-        </div>
-
-        <script>
-            const electron = require('electron');
-            const {ipcRenderer} = electron;
-            
-            let serverList;
-
-            let sortOptions = {"currentField":null,"currentDir":-1}
-
-            const serverTable = document.querySelector('#tableBody');
-            const refreshButton = document.querySelector('#refreshButton');
-            refreshButton.addEventListener("click", refresh);
-
-            function refresh(e){
-                ipcRenderer.send('refreshList');
-            }
-
-            function sortData(field, field2){
-
-                if(sortOptions.currentField == field){
-                    sortOptions.currentDir*=-1;
-                } else {
-                    sortOptions.currentField = field;
-                    sortOptions.currentDir = 1
-                }
-
-                serverList.sort(function(a,b){
-                    
-                    var x = a[field] == null || (!a[field]) ? "zzz" : a[field].toLowerCase();
-                    var y = b[field] == null || (!b[field]) ? "zzz" : b[field].toLowerCase();
-
-                    if(x<y){return -1 *  sortOptions.currentDir;}
-                    if(x>y){return 1 * sortOptions.currentDir;}
-
-                    if(x==y && field2){
-                        var x2 = a[field2] == null || (!a[field2]) ? "zzz" : a[field2].toLowerCase();
-                        var y2 = b[field2] == null || (!b[field2]) ? "zzz" : b[field2].toLowerCase();
-                        if(x2<y2){return -1 * sortOptions.currentDir;}
-                        if(x2>y2){return 1 * sortOptions.currentDir;}
-                    }
-                    return 0;
-                });
-                drawTable();
-            }
-
-            function drawTable(){
-                serverTable.innerHTML = "";
-                let i = 0
-                for(let server of serverList){
-                    let row = serverTable.insertRow(i);
-                    let cell1 = row.insertCell();
-                    let cell2 = row.insertCell();
-                    //let cell3 = row.insertCell(2);
-                    let cell4 = row.insertCell();
-                    let cell5 = row.insertCell();
-                    let cell6 = row.insertCell();
-                    let cellbtn = row.insertCell();
-                    cell1.innerHTML = server.name;
-                    cell2.innerHTML = server.hostname + ":" + server.port;
-                    //cell3.innerHTML = server.endpoint;
-                    if(server.leg){
-                    cell4.innerHTML = server.leg;
-                    } else {
-                        cell4.innerHTML = server.response; 
-                    }
-                    cell5.innerHTML = server.status;
-                    cell6.innerHTML = server.availability;
-                    let refButton = document.createElement("button");
-                    refButton.textContent = "refresh";
-                    refButton.type = "button";
-                    refButton.setAttribute('data-server-name',server.name);
-                    refButton.setAttribute('data-server-hostname',server.hostname);
-                    refButton.setAttribute('data-server-endpoint',server.endpoint);
-                    refButton.setAttribute('data-server-port',server.port);
-                    refButton.onclick = individualRefresh;
-
-                    if(server.leg == "querying...") {
-                        row.className = "table-warning"
-                        refButton.classList = "btn btn-outline-warning";
-                        refButton.textContent = "retry";
-                    } else if(server.response == "connection error, status:0") {
-                        row.classList = "table-danger";
-                        refButton.classList = "btn btn-danger";
-                        refButton.textContent = "retry";                        
-                    } else {
-                        row.classList = "table-success";
-                        refButton.classList = "btn btn-success";
-                        refButton.textContent = "refresh";
-                    }
-                    cellbtn.appendChild(refButton);
-                    i++;
-                }
-            }
+    </div> -->
 
 
-            ipcRenderer.on('updateServerList',function(e,serverData){
-                serverList = serverData;
-                drawTable();
-                requestAllServerDetails();
-            })
-            ipcRenderer.on('drawTable',drawTable)
-            ipcRenderer.on('getAllServerDetails',requestAllServerDetails)
+    <div id="modalDiv">
 
-            function requestAllServerDetails(){
-                for(let server of serverList){
-                        server.leg="querying...";
-                        getServerDetails(server);
-                }
-            }
+    </div>
+    <div style="height:40px">
 
-            function individualRefresh(e){
-                for(let server of serverList){
-                    if(server.name == e.target.attributes['data-server-name'].value){
-                    server.leg="querying...";
-                    drawTable();
-                    getServerDetails(server);
-                    }
-                }
-            }
+    </div>
+    <div>
+        <nav class="navbar fixed-bottom navbar-light bg-light">
+            <div class="col-md-12" id="refreshDiv" style="margin-top: 5px; margin-bottom:5px">
+            </div>
+        </nav>
+    </div>
+    <script src="./electronIndex.js"></script>
 
-            function getServerDetails(server){
+</body>
 
-                // if(!server.name){
-                //     server.name = server.target.attributes['data-server-name'].value;
-                //     server.hostname = server.target.attributes['data-server-hostname'].value; 
-                //     server.endpoint = server.target.attributes['data-server-endpoint'].value; 
-                //     server.port = server.target.attributes['data-server-port'].value;
-                // }
-
-                // server.leg = "querying...";
-                // drawTable();
-
-                let url = "http://" + server.hostname + ":" + server.port + server.endpoint;
-                getRequest(updateServerResults, url, server.name);
-            }
-
-            function getRequest(callback, url, id){
-                var xhr = new XMLHttpRequest();
-                // xhr.onerror = function(e){
-                //   console.log(e);
-                //   callback("Unknown Error Occured. Server response not received.",id);
-                // };
-                xhr.open("GET", url, true);
-                xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-
-                xhr.send();
-                xhr.onreadystatechange = function() {
-                    if(xhr.readyState == 4 && xhr.status == 200) {
-                    callback(xhr.responseText,id);
-                    }
-                    if(xhr.readyState == 4 && xhr.status != 200) {
-                    callback("connection error, status:" + xhr.status,id);
-                    }
-                }  
-            }
-
-            function updateServerResults(data, serverName){
-                //format = {"status":{"available":true,"currentStatus":"UP_AND_RUNNING","label":"LEGX"}}
-                for(server of serverList){
-                    if(serverName == server.name) {
-                        server.response = data;
-                        try{
-                            server.leg = JSON.parse(data).status.label;
-                        //break;
-                        } catch (e) {
-                            server.leg = data;
-                        }
-                        try{
-                            server.status = JSON.parse(data).status.currentStatus;
-                        //break;
-                        } catch (e) {
-                            server.status = null;
-                        }
-                        try{
-                            server.availability = JSON.parse(data).status.available.toString();
-                        //break;
-                        } catch (e) {
-                            server.availability = null;
-                        }
-                    }
-                }
-                drawTable();
-            }
-
-            function sortTable(n) {
-                var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-                table = document.getElementById("serverTable");
-                switching = true;
-                // Set the sorting direction to ascending:
-                dir = "asc"; 
-                /* Make a loop that will continue until
-                no switching has been done: */
-                while (switching) {
-                    // Start by saying: no switching is done:
-                    switching = false;
-                    rows = table.getElementsByTagName("TR");
-                    /* Loop through all table rows (except the
-                    first, which contains table headers): */
-                    for (i = 1; i < (rows.length - 1); i++) {
-                        // Start by saying there should be no switching:
-                        shouldSwitch = false;
-                        /* Get the two elements you want to compare,
-                        one from current row and one from the next: */
-                        x = rows[i].getElementsByTagName("TD")[n];
-                        y = rows[i + 1].getElementsByTagName("TD")[n];
-                        /* Check if the two rows should switch place,
-                        based on the direction, asc or desc: */
-                        if (dir == "asc") {
-                            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                            // If so, mark as a switch and break the loop:
-                            shouldSwitch = true;
-                            break;
-                            }
-                        } else if (dir == "desc") {
-                            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                            // If so, mark as a switch and break the loop:
-                                shouldSwitch = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (shouldSwitch) {
-                    /* If a switch has been marked, make the switch
-                    and mark that a switch has been done: */
-                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                    switching = true;
-                    // Each time a switch is done, increase this count by 1:
-                    switchcount ++; 
-                    } else {
-                    /* If no switching has been done AND the direction is "asc",
-                    set the direction to "desc" and run the while loop again. */
-                        if (switchcount == 0 && dir == "asc") {
-                            dir = "desc";
-                            switching = true;
-                        }
-                    }
-                }
-            }
-        </script>
-    </body>
-  </html>
+</html>
