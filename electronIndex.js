@@ -612,7 +612,13 @@ function gotSubServerList(data, _subLB) {
   replyCount++;
   try {
     let subLBResponse = JSON.parse(data);
-    let subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
+    let subLBServerList;
+    if(subLBResponse.lbvserver[0].servicegroupmember) {
+      subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
+    } else {
+      console.log("No Servers On " + _subLB.name )
+      return;
+    }
     for (subLBServer of subLBServerList) {
       subLBServer.LBName = _subLB.name;
       subLBServer.MLBState = subLBResponse.lbvserver[0].state;
@@ -678,10 +684,30 @@ function enableServerListButton() {
 }
 
 function requestAllServerDetails() {
-  for (let server of serverList) {
-    server.ASMleg = "querying...";
-    getServerDetails(server);
+
+  let tempServerList = [];
+  for (item of serverList) {
+      tempServerList.push(item.hostname);
   }
+  tempServerList = tempServerList.filter(onlyUnique);
+
+  for(tempServer of tempServerList){
+    let querySent = false;
+    for (let server of serverList) {
+      if(tempServer == server.hostname){
+        if(!querySent){
+          getServerDetails(server);
+          querySent = true;
+        }
+        server.ASMleg = "querying...";
+      }
+      
+    }
+  }
+}
+
+function onlyUnique(value, index, self) {
+  return self.indexOf(value) === index;
 }
 
 function individualRefresh(e) {
