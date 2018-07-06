@@ -828,15 +828,16 @@ function postedMaint(response, action, err, _server, timeout) {
   console.log(replyStatus);
   switch (action) {
     case "SET":
-      if (timeout > 0) {
-        $("#setMaintDelayBtn").popover("dispose");
-        $("#setMaintDelayBtn").popover({
-          title: replyTitle,
-          content: replyStatus,
-          trigger: "focus"
-        });
-        $("#setMaintDelayBtn").popover("show");
-      } else {
+      // if (timeout > 0) {
+      //   $("#setMaintDelayBtn").popover("dispose");
+      //   $("#setMaintDelayBtn").popover({
+      //     title: replyTitle,
+      //     content: replyStatus,
+      //     trigger: "focus"
+      //   });
+      //   $("#setMaintDelayBtn").popover("show");
+      // } else 
+      {
         $("#setMaintBtn").popover("dispose");
         $("#setMaintBtn").popover({
           title: replyTitle,
@@ -870,9 +871,9 @@ function postedMaint(response, action, err, _server, timeout) {
 
   drawMultiTables();
   setTimeout(getServerListFromSubLBList, 10000, currentSubEnv);
-  if (timeout > 0) {
-    setTimeout(getServerListFromSubLBList, 1000 * timeout, currentSubEnv);
-  }
+  // if (timeout > 0) {
+  //   setTimeout(getServerListFromSubLBList, 1000 * timeout, currentSubEnv);
+  // }
 }
 
 function maintMode(action, server, timeoutSeconds) {
