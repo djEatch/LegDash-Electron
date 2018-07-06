@@ -876,14 +876,14 @@ function postedMaint(response, action, err, _server, timeout) {
   // }
 }
 
-function maintMode(action, server, timeoutSeconds) {
+function maintMode(action, server){//, timeoutSeconds) {
   //gbrpmsuisf01.corp.internal
 
   switch (action.toUpperCase()) {
     case "SET": {
-      if (!timeoutSeconds) {
-        timeoutSeconds = 0;
-      }
+      // if (!timeoutSeconds) {
+      //   timeoutSeconds = 0;
+      // }
       postRequest(
         postedMaint,
         "https://" +
@@ -892,8 +892,8 @@ function maintMode(action, server, timeoutSeconds) {
         "param=" + timeoutSeconds + "&param=false&executed=true",
         "Basic " + btoa("FT1Admin:changeme"),
         action,
-        server,
-        timeoutSeconds
+        server//,
+        // timeoutSeconds
       );
       // https://gbrpmsuisf01.corp.internal:8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode%28int%2Cboolean%29
       console.log(action, server);
