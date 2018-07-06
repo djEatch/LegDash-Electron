@@ -101,11 +101,11 @@ function makeModal(server) {
   setMaintBtn.classList = "btn btn-secondary";
   setMaintBtn.setAttribute("data-placement", "bottom");
 
-  let setMaintDelayBtn = document.createElement("button");
-  setMaintDelayBtn.id = "setMaintDelayBtn";
-  setMaintDelayBtn.textContent = "Set Maintenance Mode (DELAY)";
-  setMaintDelayBtn.classList = "btn btn-secondary";
-  setMaintDelayBtn.setAttribute("data-placement", "bottom");
+  // let setMaintDelayBtn = document.createElement("button");
+  // setMaintDelayBtn.id = "setMaintDelayBtn";
+  // setMaintDelayBtn.textContent = "Set Maintenance Mode (DELAY)";
+  // setMaintDelayBtn.classList = "btn btn-secondary";
+  // setMaintDelayBtn.setAttribute("data-placement", "bottom");
 
   let unsetMaintBtn = document.createElement("button");
   unsetMaintBtn.id = "unsetMaintBtn";
@@ -119,15 +119,15 @@ function makeModal(server) {
   setMaintBtn.addEventListener("click", () => {
     maintMode("SET", server);
   });
-  setMaintDelayBtn.addEventListener("click", () => {
-    maintMode("SET", server, 180);
-  });
+  // setMaintDelayBtn.addEventListener("click", () => {
+  //   maintMode("SET", server, 180);
+  // });
   unsetMaintBtn.addEventListener("click", () => {
     maintMode("UNSET", server);
   });
 
   mfoot.insertBefore(setMaintBtn, mfootbtn);
-  mfoot.insertBefore(setMaintDelayBtn, mfootbtn);
+  // mfoot.insertBefore(setMaintDelayBtn, mfootbtn);
   mfoot.insertBefore(unsetMaintBtn, mfootbtn);
 
   $("#myModal").modal("show");
