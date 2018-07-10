@@ -878,7 +878,7 @@ function postedMaint(response, action, err, _server, timeout) {
 
 function maintMode(action, server){//, timeoutSeconds) {
   //gbrpmsuisf01.corp.internal
-
+  let timeoutSeconds=0;
   switch (action.toUpperCase()) {
     case "SET": {
       // if (!timeoutSeconds) {
