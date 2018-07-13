@@ -87,9 +87,9 @@ function getMasterLBList() {
       let myEnv = new MasterLB(
         data[0].replace(/['"]+/g, ""),
         data[1].replace(/['"]+/g, ""),
-        data[2].replace(/['"]+/g, ""),
-        data[3].replace(/['"]+/g, ""),
-        data[4].replace(/['"]+/g, "")
+        data[2].replace(/['"]+/g, "")//,
+        //data[3].replace(/['"]+/g, ""),
+        //data[4].replace(/['"]+/g, "")
       );
       masterLBList.push(myEnv);
     }
