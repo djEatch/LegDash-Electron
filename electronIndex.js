@@ -899,9 +899,9 @@ function updateServerResults(data, _server, timing) {
         } else {
           server.deployments = deploys;
         }
-        console.log(server.deployments);
+        //console.log(server.deployments);
       } catch (e) {
-        server.deployments = null;
+        server.deployments = [];
       }
     }
   }
@@ -926,9 +926,9 @@ function postedMaint(response, action, err, _server, timeout) {
       action +
       " has complested successfully and returned the following response: " +
       reply.getElementById("fade").textContent;
-    console.log(reply);
+    //console.log(reply);
   }
-  console.log(replyStatus);
+  //console.log(replyStatus);
   switch (action) {
     case "SET":
       // if (timeout > 0) {
@@ -965,7 +965,7 @@ function postedMaint(response, action, err, _server, timeout) {
 
   for (sv of serverList) {
     if (sv == _server) {
-      console.log(sv);
+      //console.log(sv);
       sv.availability = "refreshing...";
       sv.MLBState = "refreshing...";
       sv.status = "refreshing...";
@@ -1000,7 +1000,7 @@ function maintMode(action, server) {
         // timeoutSeconds
       );
       // https://gbrpmsuisf01.corp.internal:8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode%28int%2Cboolean%29
-      console.log(action, server);
+      //console.log(action, server);
       break;
     }
     case "UNSET": {
@@ -1022,13 +1022,13 @@ function maintMode(action, server) {
       console.log(server);
     }
   }
-  console.log("end of function");
+  //console.log("end of function");
 }
 
-function whatDoesLBThinkOfThisServer(server) {
-  console.log(serverList, envTypeList, fullSubLBList, lbServerList);
-  console.log(server);
-}
+// function whatDoesLBThinkOfThisServer(server) {
+//   console.log(serverList, envTypeList, fullSubLBList, lbServerList);
+//   console.log(server);
+// }
 
 class Server {
   constructor(name, hostname, port, endpoint) {
