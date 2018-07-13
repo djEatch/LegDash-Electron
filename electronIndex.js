@@ -837,7 +837,7 @@ function updateServerResults(data, _server, timing) {
         }
         console.log(server.deployments);
       } catch (e) {
-        server.deployments = null;
+        server.deployments = [];
       }
     }
   }
