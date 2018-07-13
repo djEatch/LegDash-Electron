@@ -17,6 +17,7 @@ let replyCount = 0;
 let lbUsers = [];
 let currentMLBuser;
 let jmxUsers = [];
+let currentJMXuser;
 
 let sortOptions = { currentField: null, currentDir: -1 };
 const accordionContainer = document.querySelector("#accordionContainer");
@@ -511,6 +512,25 @@ function lbLogin(e, u, p) {
   pickedEnvType(envType);
 }
 
+function jmxLogin(e, u, p) {
+  let envName = e.getAttribute("data-jmxUserEnvName");
+  let _action = e.getAttribute("data-jmxUserAction");
+  let _server = JSON.parse(e.getAttribute("data-jmxUserServer"));
+  jmxUsers.push(new JMXUser(envName, u.value, p.value));
+  $("#jmxLoginModalDiv").modal("hide");
+  maintMode(_action, _server);
+}
+
+function reAuthenticateJMX(url, response, _envName, _action, _server ) {
+  //_envName = document.querySelector("#EnvDropDown").value;
+  console.log("NEED NEW CREDS, for " + _envName, url, response);
+  jmxUsers = jmxUsers.filter(function(jmxu) {
+    return jmxu != currentJMXuser;
+  });
+
+  showJMXLoginModal(_envName, _action, _server);
+}
+
 function reAuthenticateLB(url, response) {
   _envType = document.querySelector("#EnvDropDown").value;
   console.log("NEED NEW CREDS, for " + _envType, url, response);
@@ -528,6 +548,19 @@ function showLBLoginModal(_envType) {
   let lbCredModalSubmitBtn = document.querySelector("#btnSetLBcredentials");
   lbCredModalSubmitBtn.setAttribute("data-lbUserEnvType", _envType);
   $("#loginModalDiv").modal("show");
+}
+
+function showJMXLoginModal(_envName, _action, _server) {
+  try{$("#myModal").modal("hide");}
+  catch(error){console.log(error, "no modal to close")}
+  let jmxCredModal = document.querySelector("#modalJMXpara");
+  jmxCredModal.innerHTML =
+    "Enter JMX login details for the envrionment: " + _envName;
+  let jmxCredModalSubmitBtn = document.querySelector("#btnSetJMXcredentials");
+  jmxCredModalSubmitBtn.setAttribute("data-jmxUserEnvName", _envName);
+  jmxCredModalSubmitBtn.setAttribute("data-jmxUserAction", _action);
+  jmxCredModalSubmitBtn.setAttribute("data-jmxUserServer", JSON.stringify(_server));
+  $("#jmxLoginModalDiv").modal("show");
 }
 
 function pickedEnvType(_envType) {
@@ -862,6 +895,12 @@ function postRequest(callback, url, args, auth, action, server, timeout) {
     if (xhr.readyState == 4 && xhr.status == 200) {
       callback(xhr.responseText, action, null, server, timeout);
     }
+    if (xhr.readyState == 4 && xhr.status == 401) {
+      if (        callback.name == "postedMaint"      ) {
+        reAuthenticateJMX(url, xhr.responseText, server.name.split("-")[0], action, server );
+        return;
+      }
+    }
     if (xhr.readyState == 4 && xhr.status != 200) {
       callback(xhr.responseText, action, xhr.status, server);
     }
@@ -926,6 +965,7 @@ function postedMaint(response, action, err, _server, timeout) {
       action +
       " has complested successfully and returned the following response: " +
       reply.getElementById("fade").textContent;
+      $("#myModal").modal("show");
     //console.log(reply);
   }
   //console.log(replyStatus);
@@ -980,6 +1020,20 @@ function postedMaint(response, action, err, _server, timeout) {
 }
 
 function maintMode(action, server) {
+
+  currentJMXuser = null;
+  for (jmxUser of jmxUsers) {
+    if (jmxUser.environmentName == server.name.split("-")[0]) {
+      currentJMXuser = jmxUser;
+      break;
+    }
+  }
+
+  if (!currentJMXuser) {
+    showJMXLoginModal(server.name.split("-")[0],action, server);
+    return;
+  }
+
   //, timeoutSeconds) {
   //gbrpmsuisf01.corp.internal
   let timeoutSeconds = 0;
@@ -994,7 +1048,7 @@ function maintMode(action, server) {
           server.hostname +
           ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode(int,boolean)",
         "param=" + timeoutSeconds + "&param=false&executed=true",
-        "Basic " + btoa("FT1Admin:changeme"),
+        "Basic " + btoa(currentJMXuser.userName + ":" + currentJMXuser.passWord),
         action,
         server //,
         // timeoutSeconds
@@ -1010,7 +1064,7 @@ function maintMode(action, server) {
           server.hostname +
           ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/unsetMaintenanceMode()",
         "executed=true",
-        "Basic " + btoa("FT1Admin:changeme"),
+        "Basic " + btoa(currentJMXuser.userName + ":" + currentJMXuser.passWord),
         action,
         server
       );
@@ -1057,7 +1111,7 @@ class LBUser {
 
 class JMXUser {
   constructor(envName, uName, pWord) {
-    this.envrionmentName = envName;
+    this.environmentName = envName;
     this.userName = uName;
     this.passWord = pWord;
   }
