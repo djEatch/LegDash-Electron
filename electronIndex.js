@@ -32,9 +32,9 @@ function fudgeFunction() {
   //$('#collapseThree').collapse('hide')
   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
   //ipcRenderer.send('showServerWindow',serverList);
-  // thing = document.querySelector("#modalLBpara")
-  // thing.innerHTML="TEXT FROM FUDGE"
-  // $("#loginModalDiv").modal("show");
+  thing = document.querySelector("#modalJMXpara")
+  thing.innerHTML="TEXT FROM FUDGE"
+  $("#jmxLoginModalDiv").modal("show");
 }
 
 function makeModal(server) {
