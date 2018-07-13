@@ -17,7 +17,7 @@ let replyCount = 0;
 let sortOptions = { currentField: null, currentDir: -1 };
 const accordionContainer = document.querySelector("#accordionContainer");
 const modalDiv = document.querySelector("#modalDiv");
-
+const NOLEG = "No Leg Info"
 // const fudgeButton = document.querySelector("#fudgeButton");
 // fudgeButton.addEventListener("click", fudgeFunction);
 
@@ -90,9 +90,9 @@ function makeModal(server) {
   h.appendChild(t); // Append the text to <h1>
   mbody.appendChild(h);
 
-  h = document.createElement("P"); // Create a <h1> element
+  h = document.createElement("P"); // Create a <p> element
   t = document.createTextNode(server.response); // Create a text node
-  h.appendChild(t); // Append the text to <h1>
+  h.appendChild(t); // Append the text to <p>
   mbody.appendChild(h);
 
   let setMaintBtn = document.createElement("button");
@@ -279,6 +279,7 @@ function drawMultiTables() {
     let cell8 = row.insertCell();
     let cell9 = row.insertCell();
     let cellConnCount = row.insertCell();
+    let cellDeployments = row.insertCell();
 
     // Add some bold text in the new cell:
     cell1.innerHTML = "<b>Name</b>";
@@ -294,6 +295,7 @@ function drawMultiTables() {
     cell8.innerHTML = "<b>Res. Time</b>";
     cell9.innerHTML = "<b>Retry</b>";
     cellConnCount.innerHTML = "<b>Con. Count</b>";
+    cellDeployments.innerHTML = "<b>Dep.</b>"
 
     for (server of serverList) {
       if (server.LBName == currentLB.name) {
@@ -308,6 +310,7 @@ function drawMultiTables() {
         let cell8 = row.insertCell();
         let cellbtn = row.insertCell();
         let cellConnCount = row.insertCell();
+        let cellDeployments = row.insertCell();
         cell1.innerHTML = server.name;
         cell2.innerHTML = server.hostname + ":" + server.port;
         cell2.setAttribute("data-server-name", server.name);
@@ -319,17 +322,38 @@ function drawMultiTables() {
         //     console.log('clicked', server);
         //     //ipcRenderer.send('popup',server);
         // })
-        if (server.ASMleg) {
-          cell3.innerHTML = server.ASMleg;
-        } else {
-          cell3.innerHTML = server.response;
+        cell3.innerHTML = server.ASMleg;
+        if(server.ASMleg == NOLEG){
+
+          cell3.setAttribute("data-server-name", server.name);
+          cell3.setAttribute("data-server-hostname", server.hostname);
+          cell3.setAttribute("data-server-endpoint", server.endpoint);
+          cell3.setAttribute("data-server-port", server.port);
+          cell3.onclick = showResponseDetails;
+
+          cell3.style.color = "red";
         }
+
         cell4.innerHTML = server.status;
+        if (server.status != "UP_AND_RUNNING"){
+          cell4.setAttribute("data-server-name", server.name);
+          cell4.setAttribute("data-server-hostname", server.hostname);
+          cell4.setAttribute("data-server-endpoint", server.endpoint);
+          cell4.setAttribute("data-server-port", server.port);
+          cell4.onclick = showResponseDetails;
+        }
         cell5.innerHTML = server.availability;
         cell6.innerHTML = server.state;
         cell7.innerHTML = server.LBLeg;
         cell8.innerHTML = server.responseTime;
         cellConnCount.innerHTML = server.cursrvrconnections;
+
+        cellDeployments.innerHTML = "";
+        for(deployment of server.deployments)
+        {
+          cellDeployments.innerHTML += deployment.deploymentName.split("-")[1] + " : " + deployment.deployed + "<br>";
+        }
+        cellDeployments.innerHTML = cellDeployments.innerHTML.slice(0,-4);
 
         let refButton = document.createElement("button");
         refButton.textContent = "refresh";
@@ -654,6 +678,7 @@ function processServers() {
     lbServer.availability = null;
     lbServer.status = null;
     lbServer.LBLeg = lbServer.servicegroupname.split("-")[2];
+    lbServer.deployments = [];
   }
 
   serverList = lbServerList;
@@ -727,7 +752,7 @@ function individualRefresh(e) {
 }
 
 function getServerDetails(server) {
-  let url = "http://" + server.hostname + ":" + server.port + server.endpoint;
+  let url = "http://" + server.hostname + ":" + server.port + server.endpoint + "?include_version=true";
   getRequest(updateServerResults, url, server);
 }
 
@@ -788,7 +813,8 @@ function updateServerResults(data, _server, timing) {
       try {
         server.ASMleg = JSON.parse(data).status.label.replace(/^Leg/, "");
       } catch (e) {
-        server.ASMleg = data;
+        //server.ASMleg = data;
+        server.ASMleg = NOLEG;
       }
       try {
         server.status = JSON.parse(data).status.currentStatus;
@@ -799,6 +825,19 @@ function updateServerResults(data, _server, timing) {
         server.availability = JSON.parse(data).status.available.toString();
       } catch (e) {
         server.availability = null;
+      }
+      try {
+        let deploys = JSON.parse(data).status.deployments;
+
+        if(!Array.isArray(deploys)){
+          server.deployments = [];
+          server.deployments.push(deploys)
+        } else {
+          server.deployments = deploys;
+        }
+        console.log(server.deployments);
+      } catch (e) {
+        server.deployments = [];
       }
     }
   }
