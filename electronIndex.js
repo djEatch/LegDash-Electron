@@ -963,7 +963,7 @@ function postedMaint(response, action, err, _server, timeout) {
     replyStatus =
       "The action " +
       action +
-      " has complested successfully and returned the following response: " +
+      " has completed successfully and returned the following response: " +
       reply.getElementById("fade").textContent;
       $("#myModal").modal("show");
     //console.log(reply);
