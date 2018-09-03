@@ -23,6 +23,8 @@ let sortOptions = { currentField: null, currentDir: -1 };
 const accordionContainer = document.querySelector("#accordionContainer");
 const modalDiv = document.querySelector("#modalDiv");
 const NOLEG = "No Leg Info";
+const NODEPLOY = "No Deployment Info";
+const CONNERROR = "connection error, status: ";
 const fudgeButton = document.querySelector("#fudgeButton");
 fudgeButton.addEventListener("click", fudgeFunction);
 
@@ -331,24 +333,28 @@ function drawMultiTables() {
         //     //ipcRenderer.send('popup',server);
         // })
         cell3.innerHTML = server.ASMleg;
+        cell3.setAttribute("data-server-name", server.name);
+        cell3.setAttribute("data-server-hostname", server.hostname);
+        cell3.setAttribute("data-server-endpoint", server.endpoint);
+        cell3.setAttribute("data-server-port", server.port);
+        cell3.onclick = showResponseDetails;
         if (server.ASMleg == NOLEG) {
-          cell3.setAttribute("data-server-name", server.name);
-          cell3.setAttribute("data-server-hostname", server.hostname);
-          cell3.setAttribute("data-server-endpoint", server.endpoint);
-          cell3.setAttribute("data-server-port", server.port);
-          cell3.onclick = showResponseDetails;
-
           cell3.style.color = "red";
         }
 
+
         cell4.innerHTML = server.status;
-        if (server.status != "UP_AND_RUNNING") {
+//        if (server.status != "UP_AND_RUNNING") {
           cell4.setAttribute("data-server-name", server.name);
           cell4.setAttribute("data-server-hostname", server.hostname);
           cell4.setAttribute("data-server-endpoint", server.endpoint);
           cell4.setAttribute("data-server-port", server.port);
-          cell4.onclick = showResponseDetails;
+//        }
+        cell4.onclick = showResponseDetails;
+        if(cell4.textContent.substring(0,26) == CONNERROR) {
+          cell4.style.color = "red";
         }
+
         cell5.innerHTML = server.availability;
         cell6.innerHTML = server.state;
         cell7.innerHTML = server.LBLeg;
@@ -357,13 +363,20 @@ function drawMultiTables() {
 
         cellDeployments.innerHTML = "";
         for (deployment of server.deployments) {
+          if(deployment == NODEPLOY){
+            cellDeployments.innerHTML = NODEPLOY + "<br>";
+          } else {
           cellDeployments.innerHTML +=
             deployment.deploymentName.split("-")[1] +
             " : " +
             deployment.deployed +
             "<br>";
-        }
+          }
+        } 
         cellDeployments.innerHTML = cellDeployments.innerHTML.slice(0, -4);
+        if(cellDeployments.textContent == NODEPLOY) {
+          cellDeployments.style.color = "red";
+        }
 
         let refButton = document.createElement("button");
         refButton.textContent = "refresh";
@@ -874,7 +887,7 @@ function getRequest(callback, url, id, username, password) {
     if (xhr.readyState == 4 && xhr.status != 200) {
       var endTime = new Date();
       callback(
-        "connection error, status:" + xhr.status,
+        CONNERROR + xhr.status,
         id,
         endTime - startTime
       );
@@ -922,7 +935,7 @@ function updateServerResults(data, _server, timing) {
       try {
         server.status = JSON.parse(data).status.currentStatus;
       } catch (e) {
-        server.status = null;
+        server.status = data;
       }
       try {
         server.availability = JSON.parse(data).status.available.toString();
@@ -933,8 +946,12 @@ function updateServerResults(data, _server, timing) {
         let deploys = JSON.parse(data).status.deployments;
 
         if (!Array.isArray(deploys)) {
-          server.deployments = [];
-          server.deployments.push(deploys);
+          if(deploys){
+            server.deployments = [];
+            server.deployments.push(deploys);
+          } else {
+            server.deployments = [NODEPLOY];
+          }
         } else {
           server.deployments = deploys;
         }
