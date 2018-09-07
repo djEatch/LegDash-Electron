@@ -25,20 +25,20 @@ const modalDiv = document.querySelector("#modalDiv");
 const NOLEG = "No Leg Info";
 const NODEPLOY = "No Deployment Info";
 const CONNERROR = "connection error, status: ";
-const fudgeButton = document.querySelector("#fudgeButton");
-fudgeButton.addEventListener("click", fudgeFunction);
+// const fudgeButton = document.querySelector("#fudgeButton");
+// fudgeButton.addEventListener("click", fudgeFunction);
 
-function fudgeFunction() {
-  console.log("Clicked");
-  //whatDoesLBThinkOfThisServer(serverList[6]);
-  //makeModal();
-  //$('#collapseThree').collapse('hide')
-  //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
-  //ipcRenderer.send('showServerWindow',serverList);
-  thing = document.querySelector("#modalJMXpara")
-  thing.innerHTML="TEXT FROM FUDGE"
-  $("#jmxLoginModalDiv").modal("show");
-}
+// function fudgeFunction() {
+//   console.log("Clicked");
+//   //whatDoesLBThinkOfThisServer(serverList[6]);
+//   //makeModal();
+//   //$('#collapseThree').collapse('hide')
+//   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
+//   //ipcRenderer.send('showServerWindow',serverList);
+//   thing = document.querySelector("#modalJMXpara")
+//   thing.innerHTML="TEXT FROM FUDGE"
+//   $("#jmxLoginModalDiv").modal("show");
+// }
 
 function makeModal(server) {
   modalDiv.innerHTML = "";
