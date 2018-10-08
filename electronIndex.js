@@ -637,21 +637,23 @@ function humanEnvName(envText) {
       return "IT4";
     case "i40":
       return "IT5";
+    case "t00":
+      return "ST1";
     default:
       return envText;
   }
 }
 
 function setupSubEnvDropDown() {
-  dropDownDivSubEnv = document.querySelector("#dropDownDivSubEnv");
+  let dropDownDivSubEnv = document.querySelector("#dropDownDivSubEnv");
   let newList = document.createElement("select");
   let tempEnvList = [];
-  for (item of fullSubLBList) {
-    tempEnvList.push(item.splitEnvName);
+  for (let item of fullSubLBList) {
+    if(item.splitEnvName != "ERROR") {tempEnvList.push(item.splitEnvName);}
   }
   tempEnvList = tempEnvList.filter(onlyUnique);
   tempEnvList.sort();
-  for (env of tempEnvList) {
+  for (let env of tempEnvList) {
     newList.appendChild(new Option(humanEnvName(env), env));
   }
   newList.classList = "w-100 btn btn-secondary dropdown-toggle";
@@ -663,7 +665,7 @@ function setupSubEnvDropDown() {
     drawMultiTables();
   });
 
-  btnDivSubEnv = document.querySelector("#btnDivSubEnv");
+  let btnDivSubEnv = document.querySelector("#btnDivSubEnv");
   let pickSubEnvBtn = document.createElement("button");
   pickSubEnvBtn.textContent = "Select Sub Env";
   pickSubEnvBtn.id = "pickSubEnvBtn";
@@ -681,11 +683,17 @@ function gotSubLBList(data) {
   try {
     let masterLBResponse = JSON.parse(data);
     fullSubLBList = masterLBResponse.lbvserver;
-    for (subLB of fullSubLBList) {
-      subtext = subLB.name.split("-");
+    for (let subLB of fullSubLBList) {
+      if((subLB.name.split("-").length - 1) == 8){
+      let subtext = subLB.name.split("-");
       subLB.splitEnvName = subtext[6].substr(-3);
       subLB.splitServerType = subtext[4];
       subLB.splitLeg = subtext[5];
+      } else {
+        subLB.splitEnvName = "ERROR";
+        subLB.splitServerType = "ERROR";
+        subLB.splitLeg = "ERROR";
+      }
     }
     setupSubEnvDropDown();
   } catch (err) {
