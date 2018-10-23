@@ -212,6 +212,10 @@ function drawMultiTables() {
     return;
   }
 
+  // if(getExpectedServerCount(currentSubEnv) != serverList.length){
+  //   alert("Env: " + currentSubEnv + "\nExpected Servers: " + getExpectedServerCount(currentSubEnv) + "\nServers Found: " + serverList.length);
+  // }
+
   refreshButton = document.createElement("button");
   refreshButton.id = "refreshButton";
   refreshButton.classList = "btn btn-primary btn-block";
@@ -368,6 +372,7 @@ function drawMultiTables() {
           } else {
           cellDeployments.innerHTML +=
             deployment.deploymentName.split("-")[1] +
+            " (" + deployment.deploymentName.split("-")[2] + ")" +
             " : " +
             deployment.deployed +
             "<br>";
@@ -637,6 +642,10 @@ function humanEnvName(envText) {
       return "IT4";
     case "i40":
       return "IT5";
+    case "u00":
+      return "UT1";
+    case "u10":
+      return "UT2";
     case "t00":
       return "ST1";
     default:
@@ -790,6 +799,7 @@ function processServers() {
   enableServerListButton();
   resetSort();
   sortData("name", "hostname");
+  //checkServerCount();
   drawMultiTables();
   requestAllServerDetails();
 }
@@ -819,7 +829,7 @@ function requestAllServerDetails() {
     tempServerList.push(item.hostname);
   }
   tempServerList = tempServerList.filter(onlyUnique);
-
+  checkServerCount(tempServerList);
   for (tempServer of tempServerList) {
     let querySent = false;
     for (let server of serverList) {
@@ -1139,5 +1149,44 @@ class JMXUser {
     this.environmentName = envName;
     this.userName = uName;
     this.passWord = pWord;
+  }
+}
+
+function checkServerCount(_sList){
+  if(getExpectedServerCount(currentSubEnv) != _sList.length){
+    alert("Env: " + currentSubEnv + "\nExpected Servers: " + getExpectedServerCount(currentSubEnv) + "\nServers Found: " + _sList.length);
+  }
+}
+
+function getExpectedServerCount(envText) {
+  switch (envText.toLowerCase()) {
+    case "f00":
+      return 4;
+    case "f10":
+    return 4;
+    case "f20":
+    return 4;
+    case "f30":
+    return 4;
+    case "f40":
+    return 4;
+    case "i00":
+    return 4;
+    case "i10":
+    return 4;
+    case "i20":
+    return 4;
+    case "i30":
+    return 4;
+    case "i40":
+    return 4;
+    case "u00":
+    return 4;
+    case "u10":
+    return 4;
+    case "t00":
+    return 4;
+    default:
+      return 0;
   }
 }
