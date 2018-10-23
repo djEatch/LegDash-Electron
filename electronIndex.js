@@ -212,10 +212,6 @@ function drawMultiTables() {
     return;
   }
 
-  // if(getExpectedServerCount(currentSubEnv) != serverList.length){
-  //   alert("Env: " + currentSubEnv + "\nExpected Servers: " + getExpectedServerCount(currentSubEnv) + "\nServers Found: " + serverList.length);
-  // }
-
   refreshButton = document.createElement("button");
   refreshButton.id = "refreshButton";
   refreshButton.classList = "btn btn-primary btn-block";
@@ -799,7 +795,6 @@ function processServers() {
   enableServerListButton();
   resetSort();
   sortData("name", "hostname");
-  //checkServerCount();
   drawMultiTables();
   requestAllServerDetails();
 }
