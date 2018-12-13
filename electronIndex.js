@@ -831,7 +831,9 @@ function requestAllServerDetails() {
     tempServerList.push(item.hostname);
   }
   tempServerList = tempServerList.filter(onlyUnique);
-  checkServerCount(tempServerList);
+  if(servCountList.length > 0){
+    checkServerCount(tempServerList);
+  }
   for (tempServer of tempServerList) {
     let querySent = false;
     for (let server of serverList) {

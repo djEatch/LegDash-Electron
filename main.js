@@ -19,7 +19,7 @@ app.on("ready", function() {
     show: false,
     width: 800,
     height: 600,
-    webSecurity: true// ,
+    webSecurity: true // ,
     // webPreferences: {
     //   //nodeIntegration: false
     //   //preload: path.join(__dirname, 'electronIndex.js'),
@@ -54,7 +54,7 @@ app.on("ready", function() {
   Menu.setApplicationMenu(winMenu);
 });
 
-ipcMain.on('showServerWindow', function(e,data){
+ipcMain.on("showServerWindow", function(e, data) {
   serverWin = new BrowserWindow({
     show: false,
     width: 800,
@@ -75,7 +75,7 @@ ipcMain.on('showServerWindow', function(e,data){
     serverWin.webContents.send("showServerList", data);
     serverWin.show();
   });
-})
+});
 
 function getMasterLBList() {
   masterLBList = [];
@@ -91,7 +91,7 @@ function getMasterLBList() {
       let myEnv = new MasterLB(
         data[0].replace(/['"]+/g, ""),
         data[1].replace(/['"]+/g, ""),
-        data[2].replace(/['"]+/g, "")//,
+        data[2].replace(/['"]+/g, "") //,
         //data[3].replace(/['"]+/g, ""),
         //data[4].replace(/['"]+/g, "")
       );
@@ -103,26 +103,31 @@ function getMasterLBList() {
 
 function getServerCountList() {
   servCountList = [];
-  var data = fs.readFileSync(servCountFile).toString();
+  try {
+    var data = fs.readFileSync(servCountFile).toString();
 
-  let allTextLines = data.split(/\r\n|\n/);
-  let headers = allTextLines[0].split(",");
+    let allTextLines = data.split(/\r\n|\n/);
+    let headers = allTextLines[0].split(",");
 
-  for (let i = 1; i < allTextLines.length; i++) {
-    // split content based on comma
-    let data = allTextLines[i].split(",");
-    if (data.length == headers.length) {
-      let myServCount = new ServCount(
-        data[0].replace(/['"]+/g, ""),
-        data[1].replace(/['"]+/g, ""),
-        data[2].replace(/['"]+/g, "")//,
-        //data[3].replace(/['"]+/g, ""),
-        //data[4].replace(/['"]+/g, "")
-      );
-      servCountList.push(myServCount);
+    for (let i = 1; i < allTextLines.length; i++) {
+      // split content based on comma
+      let data = allTextLines[i].split(",");
+      if (data.length == headers.length) {
+        let myServCount = new ServCount(
+          data[0].replace(/['"]+/g, ""),
+          data[1].replace(/['"]+/g, ""),
+          data[2].replace(/['"]+/g, "") //,
+          //data[3].replace(/['"]+/g, ""),
+          //data[4].replace(/['"]+/g, "")
+        );
+        servCountList.push(myServCount);
+      }
     }
+  } catch(err) {
+    servCountList = [];
+  } finally {
+    win.webContents.send("updateServCountList", servCountList);
   }
-  win.webContents.send("updateServCountList", servCountList);
 }
 
 class ServCount {
@@ -166,18 +171,20 @@ app.on("activate", () => {
   }
 });
 
-app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
-
-  let regEx =  new RegExp("^https:\/\/.+corp.internal:");
-  let res = regEx.exec(url);
-  if (res) {
-    // Verification logic.
-    event.preventDefault()
-    callback(true)
-  } else {
-    callback(false)
+app.on(
+  "certificate-error",
+  (event, webContents, url, error, certificate, callback) => {
+    let regEx = new RegExp("^https://.+corp.internal:");
+    let res = regEx.exec(url);
+    if (res) {
+      // Verification logic.
+      event.preventDefault();
+      callback(true);
+    } else {
+      callback(false);
+    }
   }
-})
+);
 
 const template = [
   {
