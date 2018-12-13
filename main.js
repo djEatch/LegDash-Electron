@@ -10,6 +10,9 @@ let win;
 let envFile = __dirname + "/EnvTypeList.txt";
 let masterLBList = [];
 
+let servCountFile = __dirname + "/ServCountList.txt";
+let servCountList = [];
+
 app.on("ready", function() {
   // Create the browser window.
   win = new BrowserWindow({
@@ -42,6 +45,7 @@ app.on("ready", function() {
   });
 
   win.once("ready-to-show", () => {
+    getServerCountList();
     getMasterLBList();
     win.show();
   });
@@ -95,6 +99,38 @@ function getMasterLBList() {
     }
   }
   win.webContents.send("updateMasterLBList", masterLBList);
+}
+
+function getServerCountList() {
+  servCountList = [];
+  var data = fs.readFileSync(servCountFile).toString();
+
+  let allTextLines = data.split(/\r\n|\n/);
+  let headers = allTextLines[0].split(",");
+
+  for (let i = 1; i < allTextLines.length; i++) {
+    // split content based on comma
+    let data = allTextLines[i].split(",");
+    if (data.length == headers.length) {
+      let myServCount = new ServCount(
+        data[0].replace(/['"]+/g, ""),
+        data[1].replace(/['"]+/g, ""),
+        data[2].replace(/['"]+/g, "")//,
+        //data[3].replace(/['"]+/g, ""),
+        //data[4].replace(/['"]+/g, "")
+      );
+      servCountList.push(myServCount);
+    }
+  }
+  win.webContents.send("updateServCountList", servCountList);
+}
+
+class ServCount {
+  constructor(envID, envName, servCount) {
+    this.envID = envID;
+    this.envName = envName;
+    this.servCount = servCount;
+  }
 }
 
 class MasterLB {

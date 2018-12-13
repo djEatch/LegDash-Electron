@@ -6,6 +6,7 @@ var $ = require("jquery");
 let serverList = [];
 let envTypeList;
 let masterLBList = [];
+let servCountList = [];
 let fullSubLBList = [];
 let currentSubLBList = [];
 let currentMLB;
@@ -462,6 +463,12 @@ function onlyUnique(value, index, self) {
 ipcRenderer.on("updateMasterLBList", function(e, _masterLBList) {
   masterLBList = _masterLBList;
   setupEnvTypeList();
+});
+
+
+ipcRenderer.on("updateServCountList", function(e, _servCountList){
+  servCountList = _servCountList;
+  //setupEnvTypeList();
 });
 
 function setupEnvTypeList() {
@@ -1154,34 +1161,10 @@ function checkServerCount(_sList){
 }
 
 function getExpectedServerCount(envText) {
-  switch (envText.toLowerCase()) {
-    case "f00":
-      return 4;
-    case "f10":
-    return 4;
-    case "f20":
-    return 4;
-    case "f30":
-    return 4;
-    case "f40":
-    return 4;
-    case "i00":
-    return 4;
-    case "i10":
-    return 4;
-    case "i20":
-    return 4;
-    case "i30":
-    return 4;
-    case "i40":
-    return 4;
-    case "u00":
-    return 4;
-    case "u10":
-    return 4;
-    case "t00":
-    return 4;
-    default:
-      return 0;
+  for (let subEnv of servCountList){
+    if(subEnv.envID.toLowerCase() == envText.toLowerCase()){
+      return subEnv.servCount;
+    }
   }
+  return "Unknown - Check config";
 }
