@@ -1,4 +1,0 @@
-EnvID, EnvName, Servers
-"f00","4"
-"f10","14"
-"t00","40"
