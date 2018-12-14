@@ -7,8 +7,14 @@ const fs = require("fs");
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
 
-let envFile = __dirname + "/EnvTypeList.txt";
+let envTypeFile = __dirname + "/EnvTypeList.txt";
 let masterLBList = [];
+
+let servCountFile = __dirname + "/ServCountList.txt";
+let servCountList = [];
+
+let envNameFile = __dirname + "/EnvNameList.txt";
+let envNameList = [];
 
 app.on("ready", function() {
   // Create the browser window.
@@ -16,7 +22,7 @@ app.on("ready", function() {
     show: false,
     width: 800,
     height: 600,
-    webSecurity: true// ,
+    webSecurity: true // ,
     // webPreferences: {
     //   //nodeIntegration: false
     //   //preload: path.join(__dirname, 'electronIndex.js'),
@@ -42,6 +48,8 @@ app.on("ready", function() {
   });
 
   win.once("ready-to-show", () => {
+    getEnvNameList();
+    getServerCountList();
     getMasterLBList();
     win.show();
   });
@@ -50,7 +58,7 @@ app.on("ready", function() {
   Menu.setApplicationMenu(winMenu);
 });
 
-ipcMain.on('showServerWindow', function(e,data){
+ipcMain.on("showServerWindow", function(e, data) {
   serverWin = new BrowserWindow({
     show: false,
     width: 800,
@@ -71,11 +79,11 @@ ipcMain.on('showServerWindow', function(e,data){
     serverWin.webContents.send("showServerList", data);
     serverWin.show();
   });
-})
+});
 
 function getMasterLBList() {
   masterLBList = [];
-  var data = fs.readFileSync(envFile).toString();
+  var data = fs.readFileSync(envTypeFile).toString();
 
   let allTextLines = data.split(/\r\n|\n/);
   let headers = allTextLines[0].split(",");
@@ -87,14 +95,80 @@ function getMasterLBList() {
       let myEnv = new MasterLB(
         data[0].replace(/['"]+/g, ""),
         data[1].replace(/['"]+/g, ""),
-        data[2].replace(/['"]+/g, ""),
-        data[3].replace(/['"]+/g, ""),
-        data[4].replace(/['"]+/g, "")
+        data[2].replace(/['"]+/g, "") //,
+        //data[3].replace(/['"]+/g, ""),
+        //data[4].replace(/['"]+/g, "")
       );
       masterLBList.push(myEnv);
     }
   }
   win.webContents.send("updateMasterLBList", masterLBList);
+}
+
+function getServerCountList() {
+  servCountList = [];
+  try {
+    var data = fs.readFileSync(servCountFile).toString();
+
+    let allTextLines = data.split(/\r\n|\n/);
+    let headers = allTextLines[0].split(",");
+
+    for (let i = 1; i < allTextLines.length; i++) {
+      // split content based on comma
+      let data = allTextLines[i].split(",");
+      if (data.length == headers.length) {
+        let myServCount = new ServCount(
+          data[0].replace(/['"]+/g, ""),
+          data[1].replace(/['"]+/g, "")
+        );
+        servCountList.push(myServCount);
+      }
+    }
+  } catch(err) {
+    servCountList = [];
+  } finally {
+    win.webContents.send("updateServCountList", servCountList);
+  }
+}
+
+function getEnvNameList() {
+  envNameList = [];
+  try {
+    var data = fs.readFileSync(envNameFile).toString();
+
+    let allTextLines = data.split(/\r\n|\n/);
+    let headers = allTextLines[0].split(",");
+
+    for (let i = 1; i < allTextLines.length; i++) {
+      // split content based on comma
+      let data = allTextLines[i].split(",");
+      if (data.length == headers.length) {
+        let myEnvName = new EnvName(
+          data[0].replace(/['"]+/g, ""),
+          data[1].replace(/['"]+/g, "")
+        );
+        envNameList.push(myEnvName);
+      }
+    }
+  } catch(err) {
+    envNameList = [];
+  } finally {
+    win.webContents.send("updateEnvNameList", envNameList);
+  }
+}
+
+class EnvName {
+  constructor(envID, envName) {
+    this.envID = envID;
+    this.envName = envName;
+  }
+}
+
+class ServCount {
+  constructor(envID, servCount) {
+    this.envID = envID;
+    this.servCount = servCount;
+  }
 }
 
 class MasterLB {
@@ -130,18 +204,20 @@ app.on("activate", () => {
   }
 });
 
-app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
-
-  let regEx =  new RegExp("^https:\/\/.+corp.internal:");
-  let res = regEx.exec(url);
-  if (res) {
-    // Verification logic.
-    event.preventDefault()
-    callback(true)
-  } else {
-    callback(false)
+app.on(
+  "certificate-error",
+  (event, webContents, url, error, certificate, callback) => {
+    let regEx = new RegExp("^https://.+corp.internal:");
+    let res = regEx.exec(url);
+    if (res) {
+      // Verification logic.
+      event.preventDefault();
+      callback(true);
+    } else {
+      callback(false);
+    }
   }
-})
+);
 
 const template = [
   {

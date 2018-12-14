@@ -39,18 +39,7 @@
         </nav>
     </div>
 
-    <!-- <div class="container-fluid" style="margin-top: 10px; margin-bottom:10px">
-        <div class="row">
-            <div class="col-md-3" id="dropDownDivEnvType"></div>
-            <div class="col-md-2" id="btnDivEnvType"></div>
-            <div class="col-md-3" id="dropDownDivSubEnv"></div>
-            <div class="col-md-2" id="btnDivSubEnv"></div>
-            <div class="col-md-2" id="btnDivShowServers"></div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">
-            </div>
-        </div>
+    <!-- <div class="container-fluid" style="margin-top: 60px; margin-bottom:10px">
         <div class="row">
             <div class="col-md-12">
                 <button id="fudgeButton" class="btn btn-primary btn-block">FUDGE BUTTON</button>
@@ -70,7 +59,60 @@
             </div>
         </div>
     </div> -->
-
+    <div id="loginModalDiv" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">LB Login</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p id="modalLBpara"></p>
+              <div class="form-group">
+                <label for="lbusr">Name:</label>
+                <input type="text" class="form-control" id="lbusr">
+              </div>
+              <div class="form-group">
+                <label for="lbpwd">Password:</label>
+                <input type="password" class="form-control" id="lbpwd">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="btnSetLBcredentials" type="button" class="btn btn-primary" onclick="lbLogin(this, lbusr, lbpwd)">Login</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="jmxLoginModalDiv" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">JMX Login</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p id="modalJMXpara"></p>
+              <div class="form-group">
+                <label for="jmxusr">Name:</label>
+                <input type="text" class="form-control" id="jmxusr">
+              </div>
+              <div class="form-group">
+                <label for="jmxpwd">Password:</label>
+                <input type="password" class="form-control" id="jmxpwd">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="btnSetJMXcredentials" type="button" class="btn btn-primary" onclick="jmxLogin(this, jmxusr, jmxpwd)">Login</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
     <div id="modalDiv">
 

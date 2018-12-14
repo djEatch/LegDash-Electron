@@ -6,6 +6,8 @@ var $ = require("jquery");
 let serverList = [];
 let envTypeList;
 let masterLBList = [];
+let servCountList = [];
+let envNameList = [];
 let fullSubLBList = [];
 let currentSubLBList = [];
 let currentMLB;
@@ -14,10 +16,17 @@ let lbServerList = [];
 let requestCount = 0;
 let replyCount = 0;
 
+let lbUsers = [];
+let currentMLBuser;
+let jmxUsers = [];
+let currentJMXuser;
+
 let sortOptions = { currentField: null, currentDir: -1 };
 const accordionContainer = document.querySelector("#accordionContainer");
 const modalDiv = document.querySelector("#modalDiv");
-const NOLEG = "No Leg Info"
+const NOLEG = "No Leg Info";
+const NODEPLOY = "No Deployment Info";
+const CONNERROR = "connection error, status: ";
 // const fudgeButton = document.querySelector("#fudgeButton");
 // fudgeButton.addEventListener("click", fudgeFunction);
 
@@ -27,7 +36,10 @@ const NOLEG = "No Leg Info"
 //   //makeModal();
 //   //$('#collapseThree').collapse('hide')
 //   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
-//   ipcRenderer.send('showServerWindow',serverList);
+//   //ipcRenderer.send('showServerWindow',serverList);
+//   thing = document.querySelector("#modalJMXpara")
+//   thing.innerHTML="TEXT FROM FUDGE"
+//   $("#jmxLoginModalDiv").modal("show");
 // }
 
 function makeModal(server) {
@@ -295,7 +307,7 @@ function drawMultiTables() {
     cell8.innerHTML = "<b>Res. Time</b>";
     cell9.innerHTML = "<b>Retry</b>";
     cellConnCount.innerHTML = "<b>Con. Count</b>";
-    cellDeployments.innerHTML = "<b>Dep.</b>"
+    cellDeployments.innerHTML = "<b>Dep.</b>";
 
     for (server of serverList) {
       if (server.LBName == currentLB.name) {
@@ -323,25 +335,28 @@ function drawMultiTables() {
         //     //ipcRenderer.send('popup',server);
         // })
         cell3.innerHTML = server.ASMleg;
-        if(server.ASMleg == NOLEG){
-
-          cell3.setAttribute("data-server-name", server.name);
-          cell3.setAttribute("data-server-hostname", server.hostname);
-          cell3.setAttribute("data-server-endpoint", server.endpoint);
-          cell3.setAttribute("data-server-port", server.port);
-          cell3.onclick = showResponseDetails;
-
+        cell3.setAttribute("data-server-name", server.name);
+        cell3.setAttribute("data-server-hostname", server.hostname);
+        cell3.setAttribute("data-server-endpoint", server.endpoint);
+        cell3.setAttribute("data-server-port", server.port);
+        cell3.onclick = showResponseDetails;
+        if (server.ASMleg == NOLEG) {
           cell3.style.color = "red";
         }
 
+
         cell4.innerHTML = server.status;
-        if (server.status != "UP_AND_RUNNING"){
+//        if (server.status != "UP_AND_RUNNING") {
           cell4.setAttribute("data-server-name", server.name);
           cell4.setAttribute("data-server-hostname", server.hostname);
           cell4.setAttribute("data-server-endpoint", server.endpoint);
           cell4.setAttribute("data-server-port", server.port);
-          cell4.onclick = showResponseDetails;
+//        }
+        cell4.onclick = showResponseDetails;
+        if(cell4.textContent.substring(0,26) == CONNERROR) {
+          cell4.style.color = "red";
         }
+
         cell5.innerHTML = server.availability;
         cell6.innerHTML = server.state;
         cell7.innerHTML = server.LBLeg;
@@ -349,11 +364,22 @@ function drawMultiTables() {
         cellConnCount.innerHTML = server.cursrvrconnections;
 
         cellDeployments.innerHTML = "";
-        for(deployment of server.deployments)
-        {
-          cellDeployments.innerHTML += deployment.deploymentName.split("-")[1] + " : " + deployment.deployed + "<br>";
+        for (deployment of server.deployments) {
+          if(deployment == NODEPLOY){
+            cellDeployments.innerHTML = NODEPLOY + "<br>";
+          } else {
+          cellDeployments.innerHTML +=
+            deployment.deploymentName.split("-")[1] +
+            " (" + deployment.deploymentName.split("-")[2] + ")" +
+            " : " +
+            deployment.deployed +
+            "<br>";
+          }
+        } 
+        cellDeployments.innerHTML = cellDeployments.innerHTML.slice(0, -4);
+        if(cellDeployments.textContent == NODEPLOY) {
+          cellDeployments.style.color = "red";
         }
-        cellDeployments.innerHTML = cellDeployments.innerHTML.slice(0,-4);
 
         let refButton = document.createElement("button");
         refButton.textContent = "refresh";
@@ -440,6 +466,16 @@ ipcRenderer.on("updateMasterLBList", function(e, _masterLBList) {
   setupEnvTypeList();
 });
 
+
+ipcRenderer.on("updateServCountList", function(e, _servCountList){
+  servCountList = _servCountList;
+});
+
+
+ipcRenderer.on("updateEnvNameList", function(e, _envNameList){
+  envNameList = _envNameList;
+});
+
 function setupEnvTypeList() {
   //envTypeList = envTypeData;
 
@@ -467,6 +503,7 @@ function setupEnvTypeList() {
     drawMultiTables();
   });
   newList.classList = "w-100 btn btn-secondary dropdown-toggle";
+  newList.id = "EnvDropDown";
   dropDownDivEnvType.appendChild(newList);
 
   btnDivEnvType = document.querySelector("#btnDivEnvType");
@@ -494,15 +531,88 @@ function setupEnvTypeList() {
   btnDivEnvType.appendChild(pickEnvTypeBtn);
 }
 
+function lbLogin(e, u, p) {
+  let envType = e.getAttribute("data-lbUserEnvType");
+  lbUsers.push(new LBUser(envType, u.value, p.value));
+  $("#loginModalDiv").modal("hide");
+  pickedEnvType(envType);
+}
+
+function jmxLogin(e, u, p) {
+  let envName = e.getAttribute("data-jmxUserEnvName");
+  let _action = e.getAttribute("data-jmxUserAction");
+  let _server = JSON.parse(e.getAttribute("data-jmxUserServer"));
+  jmxUsers.push(new JMXUser(envName, u.value, p.value));
+  $("#jmxLoginModalDiv").modal("hide");
+  maintMode(_action, _server);
+}
+
+function reAuthenticateJMX(url, response, _envName, _action, _server ) {
+  //_envName = document.querySelector("#EnvDropDown").value;
+  console.log("NEED NEW CREDS, for " + _envName, url, response);
+  jmxUsers = jmxUsers.filter(function(jmxu) {
+    return jmxu != currentJMXuser;
+  });
+
+  showJMXLoginModal(_envName, _action, _server);
+}
+
+function reAuthenticateLB(url, response) {
+  _envType = document.querySelector("#EnvDropDown").value;
+  console.log("NEED NEW CREDS, for " + _envType, url, response);
+  lbUsers = lbUsers.filter(function(lbu) {
+    return lbu != currentMLBuser;
+  });
+
+  showLBLoginModal(_envType);
+}
+
+function showLBLoginModal(_envType) {
+  let lbCredModal = document.querySelector("#modalLBpara");
+  lbCredModal.innerHTML =
+    "Enter login details for the " + _envType + " load balancer.";
+  let lbCredModalSubmitBtn = document.querySelector("#btnSetLBcredentials");
+  lbCredModalSubmitBtn.setAttribute("data-lbUserEnvType", _envType);
+  $("#loginModalDiv").modal("show");
+}
+
+function showJMXLoginModal(_envName, _action, _server) {
+  try{$("#myModal").modal("hide");}
+  catch(error){console.log(error, "no modal to close")}
+  let jmxCredModal = document.querySelector("#modalJMXpara");
+  jmxCredModal.innerHTML =
+    "Enter JMX login details for the envrionment: " + _envName;
+  let jmxCredModalSubmitBtn = document.querySelector("#btnSetJMXcredentials");
+  jmxCredModalSubmitBtn.setAttribute("data-jmxUserEnvName", _envName);
+  jmxCredModalSubmitBtn.setAttribute("data-jmxUserAction", _action);
+  jmxCredModalSubmitBtn.setAttribute("data-jmxUserServer", JSON.stringify(_server));
+  $("#jmxLoginModalDiv").modal("show");
+}
+
 function pickedEnvType(_envType) {
+  currentMLBuser = null;
+  for (lbUser of lbUsers) {
+    if (lbUser.environmentType == _envType) {
+      currentMLBuser = lbUser;
+      break;
+    }
+  }
+
+  if (!currentMLBuser) {
+    showLBLoginModal(_envType);
+    return;
+  }
+
   if ((currentMLB = getMasterLBForEnvType(_envType))) {
     let masterLBAddress = "http://" + currentMLB.hostname + currentMLB.endpoint;
     getRequest(
       gotSubLBList,
       masterLBAddress,
       currentMLB,
-      currentMLB.username,
-      currentMLB.password
+      //currentMLB.username,
+      //currentMLB.password
+      currentMLBuser.userName,
+      currentMLBuser.passWord
     );
   } else {
     console.log(_envType + " doesn't exist");
@@ -518,45 +628,25 @@ function getMasterLBForEnvType(_envType) {
   return false;
 }
 
-function humanEnvName(envText){
-
-  switch(envText.toLowerCase()){
-    case "f00":
-    return "FT1";
-    case "f10":
-    return "FT2";
-    case "f20":
-    return "FT3";
-    case "f30":
-    return "FT4";
-    case "f40":
-    return "FT5";
-    case "i00":
-    return "IT1";
-    case "i10":
-    return "IT2";
-    case "i20":
-    return "IT3";
-    case "i30":
-    return "IT4";
-    case "i40":
-    return "IT5";
-    default:
-    return envText;
+function humanEnvName(envText) {
+  for (let _env of envNameList){
+    if(_env.envID.toLowerCase() == envText.toLowerCase()){
+      return _env.envName;
+    }
   }
-
+  return envText;
 }
 
 function setupSubEnvDropDown() {
-  dropDownDivSubEnv = document.querySelector("#dropDownDivSubEnv");
+  let dropDownDivSubEnv = document.querySelector("#dropDownDivSubEnv");
   let newList = document.createElement("select");
   let tempEnvList = [];
-  for (item of fullSubLBList) {
-    tempEnvList.push(item.splitEnvName);
+  for (let item of fullSubLBList) {
+    if(item.splitEnvName != "ERROR") {tempEnvList.push(item.splitEnvName);}
   }
   tempEnvList = tempEnvList.filter(onlyUnique);
   tempEnvList.sort();
-  for (env of tempEnvList) {
+  for (let env of tempEnvList) {
     newList.appendChild(new Option(humanEnvName(env), env));
   }
   newList.classList = "w-100 btn btn-secondary dropdown-toggle";
@@ -566,9 +656,9 @@ function setupSubEnvDropDown() {
     serverList = [];
     disableServerListButton();
     drawMultiTables();
-  })
+  });
 
-  btnDivSubEnv = document.querySelector("#btnDivSubEnv");
+  let btnDivSubEnv = document.querySelector("#btnDivSubEnv");
   let pickSubEnvBtn = document.createElement("button");
   pickSubEnvBtn.textContent = "Select Sub Env";
   pickSubEnvBtn.id = "pickSubEnvBtn";
@@ -586,16 +676,49 @@ function gotSubLBList(data) {
   try {
     let masterLBResponse = JSON.parse(data);
     fullSubLBList = masterLBResponse.lbvserver;
-    for (subLB of fullSubLBList) {
-      subtext = subLB.name.split("-");
-      subLB.splitEnvName = subtext[6].substr(-3);
-      subLB.splitServerType = subtext[4];
-      subLB.splitLeg = subtext[5];
+    for (let subLB of fullSubLBList) {
+      if((subLB.name.split("-").length - 1) == 8){
+        //let subtext = subLB.name.split("-");
+        if(subLB.name.indexOf("-EAS-")>0){
+          subLB.splitServerType = "EAS";
+        } else if (subLB.name.indexOf("-UIS-">0)){
+          subLB.splitServerType = "UIS";
+        } else {
+          subLB.splitEnvName = "ERROR";
+          subLB.splitServerType = "ERROR";
+          subLB.splitLeg = "ERROR";
+          continue;
+        }
+        let pos;
+        pos = subLB.name.search("-([^-]{12})-");
+        if(pos > 0){
+          subLB.splitEnvName = subLB.name.substr(pos+1,12).substr(-3);
+        } else {
+          subLB.splitEnvName = "ERROR";
+          subLB.splitServerType = "ERROR";
+          subLB.splitLeg = "ERROR";
+          continue;
+        }
+        pos = subLB.name.search("-([^-])-");
+        if(pos > 0){
+          subLB.splitLeg = subLB.name.substr(pos+1,1);
+        } else {
+          subLB.splitEnvName = "ERROR";
+          subLB.splitServerType = "ERROR";
+          subLB.splitLeg = "ERROR";
+          continue;
+        }
+      } else {
+        subLB.splitEnvName = "ERROR";
+        subLB.splitServerType = "ERROR";
+        subLB.splitLeg = "ERROR";
+      }
     }
     setupSubEnvDropDown();
   } catch (err) {
     console.log("BAD Response from Master LB");
     console.log(err);
+    console.log(data);
   }
 }
 
@@ -625,8 +748,10 @@ function getServerListFromSubLBList(_selectedEnvName) {
         gotSubServerList,
         subLBAddress,
         subLB,
-        currentMLB.username,
-        currentMLB.password
+        //currentMLB.username,
+        //currentMLB.password
+        lbUser.userName,
+        lbUser.passWord
       );
     }
   }
@@ -637,10 +762,10 @@ function gotSubServerList(data, _subLB) {
   try {
     let subLBResponse = JSON.parse(data);
     let subLBServerList;
-    if(subLBResponse.lbvserver[0].servicegroupmember) {
+    if (subLBResponse.lbvserver[0].servicegroupmember) {
       subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
     } else {
-      console.log("No Servers On " + _subLB.name )
+      console.log("No Servers On " + _subLB.name);
       return;
     }
     for (subLBServer of subLBServerList) {
@@ -689,7 +814,7 @@ function processServers() {
   requestAllServerDetails();
 }
 
-function disableServerListButton(){
+function disableServerListButton() {
   let btnDivShowServers = document.querySelector("#btnDivShowServers");
   btnDivShowServers.innerHTML = "";
 }
@@ -709,24 +834,24 @@ function enableServerListButton() {
 }
 
 function requestAllServerDetails() {
-
   let tempServerList = [];
   for (item of serverList) {
-      tempServerList.push(item.hostname);
+    tempServerList.push(item.hostname);
   }
   tempServerList = tempServerList.filter(onlyUnique);
-
-  for(tempServer of tempServerList){
+  if(servCountList.length > 0){
+    checkServerCount(tempServerList);
+  }
+  for (tempServer of tempServerList) {
     let querySent = false;
     for (let server of serverList) {
-      if(tempServer == server.hostname){
-        if(!querySent){
+      if (tempServer == server.hostname) {
+        if (!querySent) {
           getServerDetails(server);
           querySent = true;
         }
         server.ASMleg = "querying...";
       }
-      
     }
   }
 }
@@ -752,7 +877,13 @@ function individualRefresh(e) {
 }
 
 function getServerDetails(server) {
-  let url = "http://" + server.hostname + ":" + server.port + server.endpoint + "?include_version=true";
+  let url =
+    "http://" +
+    server.hostname +
+    ":" +
+    server.port +
+    server.endpoint +
+    "?include_version=true";
   getRequest(updateServerResults, url, server);
 }
 
@@ -774,10 +905,19 @@ function getRequest(callback, url, id, username, password) {
       var endTime = new Date();
       callback(xhr.responseText, id, endTime - startTime);
     }
+    if (xhr.readyState == 4 && xhr.status == 401) {
+      if (
+        callback.name == "gotSubLBList" ||
+        callback.name == "gotSubServerList"
+      ) {
+        reAuthenticateLB(url, xhr.responseText);
+        return;
+      }
+    }
     if (xhr.readyState == 4 && xhr.status != 200) {
       var endTime = new Date();
       callback(
-        "connection error, status:" + xhr.status,
+        CONNERROR + xhr.status,
         id,
         endTime - startTime
       );
@@ -797,6 +937,12 @@ function postRequest(callback, url, args, auth, action, server, timeout) {
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4 && xhr.status == 200) {
       callback(xhr.responseText, action, null, server, timeout);
+    }
+    if (xhr.readyState == 4 && xhr.status == 401) {
+      if (        callback.name == "postedMaint"      ) {
+        reAuthenticateJMX(url, xhr.responseText, server.name.split("-")[0], action, server );
+        return;
+      }
     }
     if (xhr.readyState == 4 && xhr.status != 200) {
       callback(xhr.responseText, action, xhr.status, server);
@@ -819,7 +965,7 @@ function updateServerResults(data, _server, timing) {
       try {
         server.status = JSON.parse(data).status.currentStatus;
       } catch (e) {
-        server.status = null;
+        server.status = data;
       }
       try {
         server.availability = JSON.parse(data).status.available.toString();
@@ -829,13 +975,17 @@ function updateServerResults(data, _server, timing) {
       try {
         let deploys = JSON.parse(data).status.deployments;
 
-        if(!Array.isArray(deploys)){
-          server.deployments = [];
-          server.deployments.push(deploys)
+        if (!Array.isArray(deploys)) {
+          if(deploys){
+            server.deployments = [];
+            server.deployments.push(deploys);
+          } else {
+            server.deployments = [NODEPLOY];
+          }
         } else {
           server.deployments = deploys;
         }
-        console.log(server.deployments);
+        //console.log(server.deployments);
       } catch (e) {
         server.deployments = [];
       }
@@ -860,11 +1010,12 @@ function postedMaint(response, action, err, _server, timeout) {
     replyStatus =
       "The action " +
       action +
-      " has complested successfully and returned the following response: " +
+      " has completed successfully and returned the following response: " +
       reply.getElementById("fade").textContent;
-    console.log(reply);
+      $("#myModal").modal("show");
+    //console.log(reply);
   }
-  console.log(replyStatus);
+  //console.log(replyStatus);
   switch (action) {
     case "SET":
       // if (timeout > 0) {
@@ -875,7 +1026,7 @@ function postedMaint(response, action, err, _server, timeout) {
       //     trigger: "focus"
       //   });
       //   $("#setMaintDelayBtn").popover("show");
-      // } else 
+      // } else
       {
         $("#setMaintBtn").popover("dispose");
         $("#setMaintBtn").popover({
@@ -901,7 +1052,7 @@ function postedMaint(response, action, err, _server, timeout) {
 
   for (sv of serverList) {
     if (sv == _server) {
-      console.log(sv);
+      //console.log(sv);
       sv.availability = "refreshing...";
       sv.MLBState = "refreshing...";
       sv.status = "refreshing...";
@@ -915,9 +1066,24 @@ function postedMaint(response, action, err, _server, timeout) {
   // }
 }
 
-function maintMode(action, server){//, timeoutSeconds) {
+function maintMode(action, server) {
+
+  currentJMXuser = null;
+  for (jmxUser of jmxUsers) {
+    if (jmxUser.environmentName == server.name.split("-")[0]) {
+      currentJMXuser = jmxUser;
+      break;
+    }
+  }
+
+  if (!currentJMXuser) {
+    showJMXLoginModal(server.name.split("-")[0],action, server);
+    return;
+  }
+
+  //, timeoutSeconds) {
   //gbrpmsuisf01.corp.internal
-  let timeoutSeconds=0;
+  let timeoutSeconds = 0;
   switch (action.toUpperCase()) {
     case "SET": {
       // if (!timeoutSeconds) {
@@ -929,13 +1095,13 @@ function maintMode(action, server){//, timeoutSeconds) {
           server.hostname +
           ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode(int,boolean)",
         "param=" + timeoutSeconds + "&param=false&executed=true",
-        "Basic " + btoa("FT1Admin:changeme"),
+        "Basic " + btoa(currentJMXuser.userName + ":" + currentJMXuser.passWord),
         action,
-        server//,
+        server //,
         // timeoutSeconds
       );
       // https://gbrpmsuisf01.corp.internal:8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode%28int%2Cboolean%29
-      console.log(action, server);
+      //console.log(action, server);
       break;
     }
     case "UNSET": {
@@ -945,7 +1111,7 @@ function maintMode(action, server){//, timeoutSeconds) {
           server.hostname +
           ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/unsetMaintenanceMode()",
         "executed=true",
-        "Basic " + btoa("FT1Admin:changeme"),
+        "Basic " + btoa(currentJMXuser.userName + ":" + currentJMXuser.passWord),
         action,
         server
       );
@@ -957,13 +1123,13 @@ function maintMode(action, server){//, timeoutSeconds) {
       console.log(server);
     }
   }
-  console.log("end of function");
+  //console.log("end of function");
 }
 
-function whatDoesLBThinkOfThisServer(server) {
-  console.log(serverList, envTypeList, fullSubLBList, lbServerList);
-  console.log(server);
-}
+// function whatDoesLBThinkOfThisServer(server) {
+//   console.log(serverList, envTypeList, fullSubLBList, lbServerList);
+//   console.log(server);
+// }
 
 class Server {
   constructor(name, hostname, port, endpoint) {
@@ -981,3 +1147,34 @@ class Server {
 class MasterLB {}
 
 class SubLB {}
+
+class LBUser {
+  constructor(envType, uName, pWord) {
+    this.environmentType = envType;
+    this.userName = uName;
+    this.passWord = pWord;
+  }
+}
+
+class JMXUser {
+  constructor(envName, uName, pWord) {
+    this.environmentName = envName;
+    this.userName = uName;
+    this.passWord = pWord;
+  }
+}
+
+function checkServerCount(_sList){
+  if(getExpectedServerCount(currentSubEnv) != _sList.length){
+    alert("Env: " + currentSubEnv + "\nExpected Servers: " + getExpectedServerCount(currentSubEnv) + "\nServers Found: " + _sList.length);
+  }
+}
+
+function getExpectedServerCount(envText) {
+  for (let subEnv of servCountList){
+    if(subEnv.envID.toLowerCase() == envText.toLowerCase()){
+      return subEnv.servCount;
+    }
+  }
+  return "Unknown - Check config";
+}
