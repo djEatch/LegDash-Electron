@@ -697,10 +697,36 @@ function gotSubLBList(data) {
     fullSubLBList = masterLBResponse.lbvserver;
     for (let subLB of fullSubLBList) {
       if((subLB.name.split("-").length - 1) == 8){
-      let subtext = subLB.name.split("-");
-      subLB.splitEnvName = subtext[6].substr(-3);
-      subLB.splitServerType = subtext[4];
-      subLB.splitLeg = subtext[5];
+        //let subtext = subLB.name.split("-");
+        if(subLB.name.indexOf("-EAS-")>0){
+          subLB.splitServerType = "EAS";
+        } else if (subLB.name.indexOf("-UIS-">0)){
+          subLB.splitServerType = "UIS";
+        } else {
+          subLB.splitEnvName = "ERROR";
+          subLB.splitServerType = "ERROR";
+          subLB.splitLeg = "ERROR";
+          continue;
+        }
+        let pos;
+        pos = subLB.name.search("-([^-]{12})-");
+        if(pos > 0){
+          subLB.splitEnvName = subLB.name.substr(pos+1,12).substr(-3);
+        } else {
+          subLB.splitEnvName = "ERROR";
+          subLB.splitServerType = "ERROR";
+          subLB.splitLeg = "ERROR";
+          continue;
+        }
+        pos = subLB.name.search("-([^-])-");
+        if(pos > 0){
+          subLB.splitLeg = subLB.name.substr(pos+1,1);
+        } else {
+          subLB.splitEnvName = "ERROR";
+          subLB.splitServerType = "ERROR";
+          subLB.splitLeg = "ERROR";
+          continue;
+        }
       } else {
         subLB.splitEnvName = "ERROR";
         subLB.splitServerType = "ERROR";
