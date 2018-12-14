@@ -115,7 +115,27 @@
       </div>
 
     <div id="modalDiv">
-
+      <div id="myModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 id="modal-header-title" class="modal-title">Server.Hostname....toDo</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <h5 id="modal-server-address">"http://" + server.hostname + ":" + server.port + server.endpoint</h5>
+              <p id="modal-server-response">server.response...toDo</p>
+            </div>
+            <div class="modal-footer">
+              <button id="setMaintBtn" type="button" class="btn btn-secondary" data-placement="bottom">Set Maintenance Mode</button>
+              <button id="unsetMaintBtn" type="button" class="btn btn-secondary" data-placement="bottom">Unset Maintenance Mode</button>
+              <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div style="height:40px">
 

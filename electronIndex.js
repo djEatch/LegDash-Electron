@@ -27,120 +27,29 @@ const modalDiv = document.querySelector("#modalDiv");
 const NOLEG = "No Leg Info";
 const NODEPLOY = "No Deployment Info";
 const CONNERROR = "connection error, status: ";
-// const fudgeButton = document.querySelector("#fudgeButton");
-// fudgeButton.addEventListener("click", fudgeFunction);
-
-// function fudgeFunction() {
-//   console.log("Clicked");
-//   //whatDoesLBThinkOfThisServer(serverList[6]);
-//   //makeModal();
-//   //$('#collapseThree').collapse('hide')
-//   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
-//   //ipcRenderer.send('showServerWindow',serverList);
-//   thing = document.querySelector("#modalJMXpara")
-//   thing.innerHTML="TEXT FROM FUDGE"
-//   $("#jmxLoginModalDiv").modal("show");
-// }
 
 function makeModal(server) {
-  modalDiv.innerHTML = "";
-  let mfade = document.createElement("div");
-  mfade.classList = "modal fade";
-  mfade.id = "myModal";
-  mfade.setAttribute("tabindex", "-1");
-  mfade.setAttribute("role", "dialog");
-  mfade.setAttribute("aria-labelledby", "myModalTitle");
-  mfade.setAttribute("aria-hidden", "true");
-  let mdialog = document.createElement("div");
-  mdialog.classList = "modal-dialog modal-lg";
-  mdialog.setAttribute("role", "document");
-  let mcontent = document.createElement("div");
-  mcontent.classList = "modal-content";
-  let mheader = document.createElement("div");
-  mheader.classList = "modal-header";
-  let mttitle = document.createElement("H5");
-  mttitle.class = "modal-title";
-  let mttext = document.createTextNode(server.hostname);
-  let btn = document.createElement("button");
-  btn.type = "button";
-  btn.classList = "close";
-  btn.setAttribute("data-dismiss", "modal");
-  btn.setAttribute("aria-label", "Close");
-  let btnspan = document.createElement("span");
-  btnspan.setAttribute("aria-hidden", "true");
-  let mbody = document.createElement("div");
-  mbody.classList = "modal-body";
-  let mfoot = document.createElement("div");
-  mfoot.classList = "modal-footer";
-  let mfootbtn = document.createElement("button");
-  mfootbtn.type = "button";
-  mfootbtn.classList = "btn btn-primary";
-  mfootbtn.setAttribute("data-dismiss", "modal");
-  mfootbtn.textContent = "Close";
+  //modalDiv.innerHTML = "";
+  let h;
+  h = document.getElementById("modal-header-title");
+  h.textContent = server.hostname;
+  
+  h = document.getElementById("modal-server-address"); 
+  h.textContent = "http://" + server.hostname + ":" + server.port + server.endpoint;
 
-  btnspan.innerHTML = "&times;";
-  btn.appendChild(btnspan);
-  mttitle.appendChild(mttext);
-  mheader.appendChild(mttitle);
-  mheader.appendChild(btn);
+  h = document.getElementById("modal-server-response"); 
+  h.textContent = server.response
 
-  mfoot.appendChild(mfootbtn);
-
-  mcontent.appendChild(mheader);
-  mcontent.appendChild(mbody);
-  mcontent.appendChild(mfoot);
-
-  mdialog.appendChild(mcontent);
-  mfade.appendChild(mdialog);
-
-  modalDiv.appendChild(mfade);
-
-  let h = document.createElement("H5"); // Create a <h1> element
-  let t = document.createTextNode(
-    "http://" + server.hostname + ":" + server.port + server.endpoint
-  ); // Create a text node
-  h.appendChild(t); // Append the text to <h1>
-  mbody.appendChild(h);
-
-  h = document.createElement("P"); // Create a <p> element
-  t = document.createTextNode(server.response); // Create a text node
-  h.appendChild(t); // Append the text to <p>
-  mbody.appendChild(h);
-
-  let setMaintBtn = document.createElement("button");
-  setMaintBtn.id = "setMaintBtn";
-  setMaintBtn.textContent = "Set Maintenance Mode";
-  setMaintBtn.classList = "btn btn-secondary";
-  setMaintBtn.setAttribute("data-placement", "bottom");
-
-  // let setMaintDelayBtn = document.createElement("button");
-  // setMaintDelayBtn.id = "setMaintDelayBtn";
-  // setMaintDelayBtn.textContent = "Set Maintenance Mode (DELAY)";
-  // setMaintDelayBtn.classList = "btn btn-secondary";
-  // setMaintDelayBtn.setAttribute("data-placement", "bottom");
-
-  let unsetMaintBtn = document.createElement("button");
-  unsetMaintBtn.id = "unsetMaintBtn";
-  unsetMaintBtn.textContent = "Unset Maintenance Mode";
-  unsetMaintBtn.classList = "btn btn-secondary";
-  unsetMaintBtn.setAttribute("data-placement", "bottom");
-
-  //setMaintBtn.setAttribute("data-toggle", "popover");
-  //unsetMaintBtn.setAttribute("data-toggle", "popover");
-
+  let setMaintBtn = document.getElementById("setMaintBtn");
+  let unsetMaintBtn = document.getElementById("unsetMaintBtn");
+ 
   setMaintBtn.addEventListener("click", () => {
     maintMode("SET", server);
   });
-  // setMaintDelayBtn.addEventListener("click", () => {
-  //   maintMode("SET", server, 180);
-  // });
+
   unsetMaintBtn.addEventListener("click", () => {
     maintMode("UNSET", server);
   });
-
-  mfoot.insertBefore(setMaintBtn, mfootbtn);
-  // mfoot.insertBefore(setMaintDelayBtn, mfootbtn);
-  mfoot.insertBefore(unsetMaintBtn, mfootbtn);
 
   $("#myModal").modal("show");
 }
