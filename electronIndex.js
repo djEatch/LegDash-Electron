@@ -7,6 +7,7 @@ let serverList = [];
 let envTypeList;
 let masterLBList = [];
 let servCountList = [];
+let envNameList = [];
 let fullSubLBList = [];
 let currentSubLBList = [];
 let currentMLB;
@@ -468,7 +469,11 @@ ipcRenderer.on("updateMasterLBList", function(e, _masterLBList) {
 
 ipcRenderer.on("updateServCountList", function(e, _servCountList){
   servCountList = _servCountList;
-  //setupEnvTypeList();
+});
+
+
+ipcRenderer.on("updateEnvNameList", function(e, _envNameList){
+  envNameList = _envNameList;
 });
 
 function setupEnvTypeList() {
@@ -624,36 +629,12 @@ function getMasterLBForEnvType(_envType) {
 }
 
 function humanEnvName(envText) {
-  switch (envText.toLowerCase()) {
-    case "f00":
-      return "FT1";
-    case "f10":
-      return "FT2";
-    case "f20":
-      return "FT3";
-    case "f30":
-      return "FT4";
-    case "f40":
-      return "FT5";
-    case "i00":
-      return "IT1";
-    case "i10":
-      return "IT2";
-    case "i20":
-      return "IT3";
-    case "i30":
-      return "IT4";
-    case "i40":
-      return "IT5";
-    case "u00":
-      return "UT1";
-    case "u10":
-      return "UT2";
-    case "t00":
-      return "ST1";
-    default:
-      return envText;
+  for (let _env of envNameList){
+    if(_env.envID.toLowerCase() == envText.toLowerCase()){
+      return _env.envName;
+    }
   }
+  return envText;
 }
 
 function setupSubEnvDropDown() {
@@ -737,6 +718,7 @@ function gotSubLBList(data) {
   } catch (err) {
     console.log("BAD Response from Master LB");
     console.log(err);
+    console.log(data);
   }
 }
 

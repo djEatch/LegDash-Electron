@@ -7,11 +7,14 @@ const fs = require("fs");
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
 
-let envFile = __dirname + "/EnvTypeList.txt";
+let envTypeFile = __dirname + "/EnvTypeList.txt";
 let masterLBList = [];
 
 let servCountFile = __dirname + "/ServCountList.txt";
 let servCountList = [];
+
+let envNameFile = __dirname + "/EnvNameList.txt";
+let envNameList = [];
 
 app.on("ready", function() {
   // Create the browser window.
@@ -45,6 +48,7 @@ app.on("ready", function() {
   });
 
   win.once("ready-to-show", () => {
+    getEnvNameList();
     getServerCountList();
     getMasterLBList();
     win.show();
@@ -79,7 +83,7 @@ ipcMain.on("showServerWindow", function(e, data) {
 
 function getMasterLBList() {
   masterLBList = [];
-  var data = fs.readFileSync(envFile).toString();
+  var data = fs.readFileSync(envTypeFile).toString();
 
   let allTextLines = data.split(/\r\n|\n/);
   let headers = allTextLines[0].split(",");
@@ -115,10 +119,7 @@ function getServerCountList() {
       if (data.length == headers.length) {
         let myServCount = new ServCount(
           data[0].replace(/['"]+/g, ""),
-          data[1].replace(/['"]+/g, ""),
-          data[2].replace(/['"]+/g, "") //,
-          //data[3].replace(/['"]+/g, ""),
-          //data[4].replace(/['"]+/g, "")
+          data[1].replace(/['"]+/g, "")
         );
         servCountList.push(myServCount);
       }
@@ -130,10 +131,42 @@ function getServerCountList() {
   }
 }
 
-class ServCount {
-  constructor(envID, envName, servCount) {
+function getEnvNameList() {
+  envNameList = [];
+  try {
+    var data = fs.readFileSync(envNameFile).toString();
+
+    let allTextLines = data.split(/\r\n|\n/);
+    let headers = allTextLines[0].split(",");
+
+    for (let i = 1; i < allTextLines.length; i++) {
+      // split content based on comma
+      let data = allTextLines[i].split(",");
+      if (data.length == headers.length) {
+        let myEnvName = new EnvName(
+          data[0].replace(/['"]+/g, ""),
+          data[1].replace(/['"]+/g, "")
+        );
+        envNameList.push(myEnvName);
+      }
+    }
+  } catch(err) {
+    envNameList = [];
+  } finally {
+    win.webContents.send("updateEnvNameList", envNameList);
+  }
+}
+
+class EnvName {
+  constructor(envID, envName) {
     this.envID = envID;
     this.envName = envName;
+  }
+}
+
+class ServCount {
+  constructor(envID, servCount) {
+    this.envID = envID;
     this.servCount = servCount;
   }
 }
