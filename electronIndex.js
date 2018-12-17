@@ -28,7 +28,7 @@ const NOLEG = "No Leg Info";
 const NODEPLOY = "No Deployment Info";
 const CONNERROR = "connection error, status: ";
 
-function makeModal(server) {
+function showServerModal(server) {
   //modalDiv.innerHTML = "";
   let h;
   h = document.getElementById("modal-header-title");
@@ -185,127 +185,128 @@ function drawMultiTables() {
     // Create an empty <thead> element and add it to the table:
     var header = table.createTHead();
     header.classList = "thead-dark";
+    let headerText = ["Name", "Hostname","ASM Leg","ASM Status", "ASM Avail.", "LB State","LB Leg","Res. Time","Retry","Con. Count", "Dep."];
 
     // Create an empty <tr> element and add it to the first position of <thead>:
     var row = header.insertRow(0);
 
     // Insert a new cell (<td>) at the first position of the "new" <tr> element:
-    let cell1 = row.insertCell();
-    let cell2 = row.insertCell();
-    let cell3 = row.insertCell();
-    let cell4 = row.insertCell();
-    let cell5 = row.insertCell();
-    let cell6 = row.insertCell();
-    let cell7 = row.insertCell();
-    let cell8 = row.insertCell();
-    let cell9 = row.insertCell();
-    let cellConnCount = row.insertCell();
-    let cellDeployments = row.insertCell();
+    let cell = []
+    for (heading of headerText){
+      cell.push(row.insertCell());
+      cell[cell.length-1].innerHTML="<b>" + heading + "</b>"
+      if(heading == "Hostname"){
+        cell[cell.length-1].addEventListener("click", function() {
+          sortData("name", "hostname");
+        });
+      }
+    }
 
-    // Add some bold text in the new cell:
-    cell1.innerHTML = "<b>Name</b>";
-    cell2.innerHTML = "<b>Hostname</b>";
-    cell2.addEventListener("click", function() {
-      sortData("name", "hostname");
-    });
-    cell3.innerHTML = "<b>ASM Leg</b>";
-    cell4.innerHTML = "<b>ASM Status</b>";
-    cell5.innerHTML = "<b>ASM Avail.</b>";
-    cell6.innerHTML = "<b>LB State</b>";
-    cell7.innerHTML = "<b>LB Leg</b>";
-    cell8.innerHTML = "<b>Res. Time</b>";
-    cell9.innerHTML = "<b>Retry</b>";
-    cellConnCount.innerHTML = "<b>Con. Count</b>";
-    cellDeployments.innerHTML = "<b>Dep.</b>";
+    // let cellConnCount = row.insertCell();
+    // let cellDeployments = row.insertCell();
 
     for (server of serverList) {
       if (server.LBName == currentLB.name) {
         let row = table.insertRow();
-        let cell1 = row.insertCell();
-        let cell2 = row.insertCell();
-        let cell3 = row.insertCell();
-        let cell4 = row.insertCell();
-        let cell5 = row.insertCell();
-        let cell6 = row.insertCell();
-        let cell7 = row.insertCell();
-        let cell8 = row.insertCell();
-        let cellbtn = row.insertCell();
-        let cellConnCount = row.insertCell();
-        let cellDeployments = row.insertCell();
-        cell1.innerHTML = server.name;
-        cell2.innerHTML = server.hostname + ":" + server.port;
-        cell2.setAttribute("data-server-name", server.name);
-        cell2.setAttribute("data-server-hostname", server.hostname);
-        cell2.setAttribute("data-server-endpoint", server.endpoint);
-        cell2.setAttribute("data-server-port", server.port);
-        cell2.onclick = showResponseDetails;
-        // cell2.addEventListener('click',() => {
-        //     console.log('clicked', server);
-        //     //ipcRenderer.send('popup',server);
-        // })
-        cell3.innerHTML = server.ASMleg;
-        cell3.setAttribute("data-server-name", server.name);
-        cell3.setAttribute("data-server-hostname", server.hostname);
-        cell3.setAttribute("data-server-endpoint", server.endpoint);
-        cell3.setAttribute("data-server-port", server.port);
-        cell3.onclick = showResponseDetails;
-        if (server.ASMleg == NOLEG) {
-          cell3.style.color = "red";
-        }
-
-
-        cell4.innerHTML = server.status;
-//        if (server.status != "UP_AND_RUNNING") {
-          cell4.setAttribute("data-server-name", server.name);
-          cell4.setAttribute("data-server-hostname", server.hostname);
-          cell4.setAttribute("data-server-endpoint", server.endpoint);
-          cell4.setAttribute("data-server-port", server.port);
-//        }
-        cell4.onclick = showResponseDetails;
-        if(cell4.textContent.substring(0,26) == CONNERROR) {
-          cell4.style.color = "red";
-        }
-
-        cell5.innerHTML = server.availability;
-        cell6.innerHTML = server.state;
-        cell7.innerHTML = server.LBLeg;
-        cell8.innerHTML = server.responseTime;
-        cellConnCount.innerHTML = server.cursrvrconnections;
-
-        cellDeployments.innerHTML = "";
-        for (deployment of server.deployments) {
-          if(deployment == NODEPLOY){
-            cellDeployments.innerHTML = NODEPLOY + "<br>";
-          } else {
-          cellDeployments.innerHTML +=
-            deployment.deploymentName.split("-")[1] +
-            " (" + deployment.deploymentName.split("-")[2] + ")" +
-            " : " +
-            deployment.deployed +
-            "<br>";
-          }
-        } 
-        cellDeployments.innerHTML = cellDeployments.innerHTML.slice(0, -4);
-        if(cellDeployments.textContent == NODEPLOY) {
-          cellDeployments.style.color = "red";
-        }
-
-        let refButton = document.createElement("button");
-        refButton.textContent = "refresh";
-        refButton.type = "button";
-        refButton.setAttribute("data-server-name", server.name);
-        refButton.setAttribute("data-server-hostname", server.hostname);
-        refButton.setAttribute("data-server-endpoint", server.endpoint);
-        refButton.setAttribute("data-server-port", server.port);
-        refButton.onclick = individualRefresh;
-
+        let cell = []
         let rowStyle = getRowStyle(server);
-
         row.className = "table-" + rowStyle.colour;
-        refButton.classList = "btn btn-" + rowStyle.colour;
-        refButton.textContent = rowStyle.text;
-
-        cellbtn.appendChild(refButton);
+        for (heading of headerText){
+          cell.push(row.insertCell());
+          switch(heading){
+            case "Name":{
+              cell[cell.length-1].innerHTML=server.name;
+              break;
+            }
+            case "Hostname":{
+              cell[cell.length-1].innerHTML=server.hostname + ":" + server.port + "<br>(" + server.ip + ")";
+              cell[cell.length-1].setAttribute("data-server-name", server.name);
+              cell[cell.length-1].setAttribute("data-server-hostname", server.hostname);
+              cell[cell.length-1].setAttribute("data-server-endpoint", server.endpoint);
+              cell[cell.length-1].setAttribute("data-server-port", server.port);
+              cell[cell.length-1].onclick = showResponseDetails;
+              break;
+            }
+            case "ASM Leg":{
+              cell[cell.length-1].innerHTML = server.ASMleg;
+              cell[cell.length-1].setAttribute("data-server-name", server.name);
+              cell[cell.length-1].setAttribute("data-server-hostname", server.hostname);
+              cell[cell.length-1].setAttribute("data-server-endpoint", server.endpoint);
+              cell[cell.length-1].setAttribute("data-server-port", server.port);
+              if (server.ASMleg == NOLEG) {
+                cell[cell.length-1].style.color = "red";
+              }
+              break;
+            }
+            case "ASM Status":{
+              cell[cell.length-1].innerHTML=server.status;
+              cell[cell.length-1].setAttribute("data-server-name", server.name);
+              cell[cell.length-1].setAttribute("data-server-hostname", server.hostname);
+              cell[cell.length-1].setAttribute("data-server-endpoint", server.endpoint);
+              cell[cell.length-1].setAttribute("data-server-port", server.port);
+              cell[cell.length-1].onclick = showResponseDetails;
+              if(cell[cell.length-1].textContent.substring(0,26) == CONNERROR) {
+                cell[cell.length-1].style.color = "red";
+              }
+              break;
+            }
+            case "ASM Avail.":{
+              cell[cell.length-1].innerHTML=server.availability;
+              break;
+            }
+            case "LB State":{
+              cell[cell.length-1].innerHTML=server.state;
+              break;
+            }
+            case "LB Leg":{
+              cell[cell.length-1].innerHTML=server.LBLeg;
+              break;
+            }
+            case "Res. Time":{
+              cell[cell.length-1].innerHTML=server.responseTime;
+              break;
+            }
+            case "Retry":{
+              let refButton = document.createElement("button");
+              refButton.textContent = "refresh";
+              refButton.type = "button";
+              refButton.setAttribute("data-server-name", server.name);
+              refButton.setAttribute("data-server-hostname", server.hostname);
+              refButton.setAttribute("data-server-endpoint", server.endpoint);
+              refButton.setAttribute("data-server-port", server.port);
+              refButton.onclick = individualRefresh;
+              refButton.classList = "btn btn-" + rowStyle.colour;
+              refButton.textContent = rowStyle.text;
+      
+              cell[cell.length-1].appendChild(refButton);
+              break;
+            }
+            case "Con. Count":{
+              cell[cell.length-1].innerHTML=server.cursrvrconnections;
+              break;
+            }
+            case "Dep.":{
+              cell[cell.length-1].innerHTML="";
+              for (deployment of server.deployments) {
+                if(deployment == NODEPLOY){
+                  cell[cell.length-1].innerHTML = NODEPLOY + "<br>";
+                } else {
+                  cell[cell.length-1].innerHTML +=
+                  deployment.deploymentName.split("-")[1] +
+                  " (" + deployment.deploymentName.split("-")[2] + ")" +
+                  " : " +
+                  deployment.deployed +
+                  "<br>";
+                }
+              } 
+              cell[cell.length-1].innerHTML = cell[cell.length-1].innerHTML.slice(0, -4);
+              if(cell[cell.length-1].textContent == NODEPLOY) {
+                cell[cell.length-1].style.color = "red";
+              }
+              break;
+            }
+          }
+        }
       }
     }
     cbd.appendChild(table);
@@ -361,7 +362,7 @@ function showResponseDetails(e) {
       server.name == e.target.attributes["data-server-name"].value
     ) {
       //ipcRenderer.send("popup", server);
-      makeModal(server);
+      showServerModal(server);
     }
   }
 }
@@ -788,7 +789,7 @@ function individualRefresh(e) {
 function getServerDetails(server) {
   let url =
     "http://" +
-    server.hostname +
+    server.ip +
     ":" +
     server.port +
     server.endpoint +
@@ -1001,7 +1002,7 @@ function maintMode(action, server) {
       postRequest(
         postedMaint,
         "https://" +
-          server.hostname +
+          server.ip +
           ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode(int,boolean)",
         "param=" + timeoutSeconds + "&param=false&executed=true",
         "Basic " + btoa(currentJMXuser.userName + ":" + currentJMXuser.passWord),
@@ -1017,7 +1018,7 @@ function maintMode(action, server) {
       postRequest(
         postedMaint,
         "https://" +
-          server.hostname +
+          server.ip +
           ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/unsetMaintenanceMode()",
         "executed=true",
         "Basic " + btoa(currentJMXuser.userName + ":" + currentJMXuser.passWord),
