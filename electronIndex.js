@@ -65,7 +65,7 @@ function resetSort() {
   //sortData("name", "hostname");
 }
 
-function sortData(field, field2) {
+function sortServerData(field, field2) {
   if (sortOptions.currentField == field) {
     sortOptions.currentDir *= -1;
   } else {
@@ -106,8 +106,8 @@ function drawMultiTables() {
 
   tempLBList = currentSubLBList;
   tempLBList.sort(function(a, b) {
-    x = a.VIPname;
-    y = b.VIPname;
+    x = a.name.toLowerCase();
+    y = b.name.toLowerCase();
     if (x < y) {
       return -1;
     } else if (x > y) {
@@ -197,7 +197,7 @@ function drawMultiTables() {
       cell[cell.length-1].innerHTML="<b>" + heading + "</b>"
       if(heading == "Hostname"){
         cell[cell.length-1].addEventListener("click", function() {
-          sortData("name", "hostname");
+          sortServerData("VIPname", "hostname");
         });
       }
     }
@@ -716,7 +716,7 @@ function processServers() {
   serverList = lbServerList;
   enableServerListButton();
   resetSort();
-  sortData("VIPname", "hostname");
+  sortServerData("VIPname", "hostname");
   drawMultiTables();
   requestAllServerDetails();
 }
