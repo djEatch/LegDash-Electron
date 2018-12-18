@@ -32,7 +32,7 @@ function showServerModal(server) {
   //modalDiv.innerHTML = "";
   let h;
   h = document.getElementById("modal-header-title");
-  h.textContent = server.hostname;
+  h.textContent = server.hostname + " (" + server.ip + ")";
   
   h = document.getElementById("modal-server-address"); 
   h.textContent = "http://" + server.hostname + ":" + server.port + server.endpoint;
@@ -106,8 +106,8 @@ function drawMultiTables() {
 
   tempLBList = currentSubLBList;
   tempLBList.sort(function(a, b) {
-    x = a.name;
-    y = b.name;
+    x = a.VIPname;
+    y = b.VIPname;
     if (x < y) {
       return -1;
     } else if (x > y) {
@@ -185,7 +185,7 @@ function drawMultiTables() {
     // Create an empty <thead> element and add it to the table:
     var header = table.createTHead();
     header.classList = "thead-dark";
-    let headerText = ["Name", "Hostname","ASM Leg","ASM Status", "ASM Avail.", "LB State","LB Leg","Res. Time","Retry","Con. Count", "Dep."];
+    let headerText = ["VIP Name", "Hostname","ASM Leg","ASM Status", "ASM Avail.", "LB State","LB Leg","Res. Time","Retry","Con. Count", "Dep."];
 
     // Create an empty <tr> element and add it to the first position of <thead>:
     var row = header.insertRow(0);
@@ -202,9 +202,6 @@ function drawMultiTables() {
       }
     }
 
-    // let cellConnCount = row.insertCell();
-    // let cellDeployments = row.insertCell();
-
     for (server of serverList) {
       if (server.LBName == currentLB.name) {
         let row = table.insertRow();
@@ -214,13 +211,13 @@ function drawMultiTables() {
         for (heading of headerText){
           cell.push(row.insertCell());
           switch(heading){
-            case "Name":{
-              cell[cell.length-1].innerHTML=server.name;
+            case "VIP Name":{
+              cell[cell.length-1].innerHTML=server.VIPname;
               break;
             }
             case "Hostname":{
               cell[cell.length-1].innerHTML=server.hostname + ":" + server.port + "<br>(" + server.ip + ")";
-              cell[cell.length-1].setAttribute("data-server-name", server.name);
+              cell[cell.length-1].setAttribute("data-server-VIPname", server.VIPname);
               cell[cell.length-1].setAttribute("data-server-hostname", server.hostname);
               cell[cell.length-1].setAttribute("data-server-endpoint", server.endpoint);
               cell[cell.length-1].setAttribute("data-server-port", server.port);
@@ -229,7 +226,7 @@ function drawMultiTables() {
             }
             case "ASM Leg":{
               cell[cell.length-1].innerHTML = server.ASMleg;
-              cell[cell.length-1].setAttribute("data-server-name", server.name);
+              cell[cell.length-1].setAttribute("data-server-VIPname", server.VIPname);
               cell[cell.length-1].setAttribute("data-server-hostname", server.hostname);
               cell[cell.length-1].setAttribute("data-server-endpoint", server.endpoint);
               cell[cell.length-1].setAttribute("data-server-port", server.port);
@@ -240,7 +237,7 @@ function drawMultiTables() {
             }
             case "ASM Status":{
               cell[cell.length-1].innerHTML=server.status;
-              cell[cell.length-1].setAttribute("data-server-name", server.name);
+              cell[cell.length-1].setAttribute("data-server-VIPname", server.VIPname);
               cell[cell.length-1].setAttribute("data-server-hostname", server.hostname);
               cell[cell.length-1].setAttribute("data-server-endpoint", server.endpoint);
               cell[cell.length-1].setAttribute("data-server-port", server.port);
@@ -270,7 +267,7 @@ function drawMultiTables() {
               let refButton = document.createElement("button");
               refButton.textContent = "refresh";
               refButton.type = "button";
-              refButton.setAttribute("data-server-name", server.name);
+              refButton.setAttribute("data-server-VIPname", server.VIPname);
               refButton.setAttribute("data-server-hostname", server.hostname);
               refButton.setAttribute("data-server-endpoint", server.endpoint);
               refButton.setAttribute("data-server-port", server.port);
@@ -359,7 +356,7 @@ function showResponseDetails(e) {
     if (
       server.port == e.target.attributes["data-server-port"].value &&
       server.hostname == e.target.attributes["data-server-hostname"].value &&
-      server.name == e.target.attributes["data-server-name"].value
+      server.VIPname == e.target.attributes["data-server-VIPname"].value
     ) {
       //ipcRenderer.send("popup", server);
       showServerModal(server);
@@ -702,9 +699,9 @@ function processServers() {
   for (let lbServer of lbServerList) {
     splitTextQuestion = lbServer.servicegroupname.split("?");
     splitTextHyphen = splitTextQuestion[0].split("-");
-    lbServer.name = splitTextQuestion[0].slice(0, -4);
+    lbServer.VIPname = splitTextQuestion[0].slice(0, -4);
     lbServer.ip = lbServer.primaryipaddress;
-    lbServer.hostname = splitTextQuestion[1] + ".corp.internal";
+    lbServer.hostname = splitTextQuestion[1];// + ".corp.internal";
     lbServer.port = splitTextQuestion[2];
     lbServer.endpoint =
       "/application-status-monitor/rest/applicationstatusmonitor/status.json";
@@ -719,7 +716,7 @@ function processServers() {
   serverList = lbServerList;
   enableServerListButton();
   resetSort();
-  sortData("name", "hostname");
+  sortData("VIPname", "hostname");
   drawMultiTables();
   requestAllServerDetails();
 }
@@ -779,7 +776,7 @@ function individualRefresh(e) {
       server.ASMleg = "querying...";
 
       drawMultiTables();
-      if (server.name == e.target.attributes["data-server-name"].value) {
+      if (server.VIPname == e.target.attributes["data-server-VIPname"].value) {
         getServerDetails(server);
       }
     }
@@ -850,7 +847,7 @@ function postRequest(callback, url, args, auth, action, server, timeout) {
     }
     if (xhr.readyState == 4 && xhr.status == 401) {
       if (        callback.name == "postedMaint"      ) {
-        reAuthenticateJMX(url, xhr.responseText, server.name.split("-")[0], action, server );
+        reAuthenticateJMX(url, xhr.responseText, server.VIPname.split("-")[0], action, server );
         return;
       }
     }
@@ -980,14 +977,14 @@ function maintMode(action, server) {
 
   currentJMXuser = null;
   for (jmxUser of jmxUsers) {
-    if (jmxUser.environmentName == server.name.split("-")[0]) {
+    if (jmxUser.environmentName == server.VIPname.split("-")[0]) {
       currentJMXuser = jmxUser;
       break;
     }
   }
 
   if (!currentJMXuser) {
-    showJMXLoginModal(server.name.split("-")[0],action, server);
+    showJMXLoginModal(server.VIPname.split("-")[0],action, server);
     return;
   }
 
@@ -1042,8 +1039,8 @@ function maintMode(action, server) {
 // }
 
 class Server {
-  constructor(name, hostname, port, endpoint) {
-    this.name = name;
+  constructor(VIPname, hostname, port, endpoint) {
+    this.VIPname = VIPname;
     this.hostname = hostname;
     this.port = port;
     this.endpoint = endpoint;
