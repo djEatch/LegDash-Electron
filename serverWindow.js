@@ -36,7 +36,7 @@ function onlyUnique(value, index, self) {
   function getServerDetails(serverName){
     for(server of serverList) {
         if (server.hostname == serverName) {
-            return {type: server.name.split("-")[1], leg: server.ASMleg , status: server.status, availability:server.availability, hostname:server.hostname, port:server.port};
+            return {type: server.VIPname.split("-")[1], leg: server.ASMleg , status: server.status, availability:server.availability, hostname:server.hostname, port:server.port};
         }
     }
     return "";
