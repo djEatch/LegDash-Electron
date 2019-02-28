@@ -221,8 +221,11 @@ app.on(
 
 const template = [
   {
-    label: "Edit",
-    submenu: [{ role: "copy" }, { role: "selectall" }]
+    label: "ExportResults",
+    accelerator: "CmdOrCtrl+S",
+    click(item, focusedWindow) {
+      if (focusedWindow) focusedWindow.webContents.send("exportResults");
+    }
   },
   {
     label: "View",

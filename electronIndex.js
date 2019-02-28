@@ -2,6 +2,7 @@ const electron = require("electron");
 const { ipcRenderer } = electron;
 const bootstrap = require("bootstrap"); //required even though not called!!
 var $ = require("jquery");
+//var Mousetrap = require('mousetrap');
 
 let serverList = [];
 let envTypeList;
@@ -308,6 +309,127 @@ function drawMultiTables() {
     }
     cbd.appendChild(table);
   }
+}
+
+ipcRenderer.on("exportResults", exportResults);
+
+function writeLine(_length,textToRepeat){
+  let i = _length;
+  let output = "";
+  while(i--){
+    output += textToRepeat;
+  }
+  return output;
+}
+function exportResults() {
+  let tempLBList = [];
+
+  let outputText = "";
+
+  tempLBList = currentSubLBList;
+  tempLBList.sort(function(a, b) {
+    x = a.name.toLowerCase();
+    y = b.name.toLowerCase();
+    if (x < y) {
+      return -1;
+    } else if (x > y) {
+      return 1;
+    } else return 0;
+  });
+
+  if (serverList.length < 1) {
+    return;
+  }
+
+  for (currentLB of tempLBList) {
+
+
+    let shortName =
+      currentLB.splitEnvName + currentLB.splitServerType + currentLB.splitLeg;
+      let headerText = ["VIP Name", "Hostname","ASM Leg","ASM Status", "ASM Avail.", "LB State","LB Leg","Res. Time","Retry","Con. Count", "Dep."];
+      let headerLength = headerText.toString().length
+    //console.log(currentLB);
+    
+    outputText += writeLine(headerLength,"=") + ("\n");
+    //outputText += "==============================================================\n"
+    outputText += (currentLB.name + " - " + currentLB.state) + ("\n");
+    outputText += writeLine(headerLength,"=") + ("\n");
+    //outputText += "==============================================================\n"
+
+    
+
+    outputText += headerText;
+    outputText += ("\n");
+    outputText += writeLine(headerLength,"-") + ("\n");
+
+    for (server of serverList) {
+      if (server.LBName == currentLB.name) {
+        for (heading of headerText){
+          switch(heading){
+            case "VIP Name":{
+              outputText += server.VIPname + ", ";
+              break;
+            }
+            case "Hostname":{
+              outputText += server.hostname + ":" + server.port + "<br>(" + server.ip + ")" + ", ";
+              break;
+            }
+            case "ASM Leg":{
+              outputText +=  server.ASMleg + ", ";
+              break;
+            }
+            case "ASM Status":{
+              outputText += server.status + ", ";
+              break;
+            }
+            case "ASM Avail.":{
+              outputText += server.availability + ", ";
+              break;
+            }
+            case "LB State":{
+              outputText += server.state + ", ";
+              break;
+            }
+            case "LB Leg":{
+              outputText += server.LBLeg + ", ";
+              break;
+            }
+            case "Res. Time":{
+              outputText += server.responseTime + ", ";
+              break;
+            }
+            case "Retry":{
+              break;
+            }
+            case "Con. Count":{
+              outputText += server.cursrvrconnections+ ", ";
+              break;
+            }
+            case "Dep.":{
+              for (deployment of server.deployments) {
+                if(deployment == NODEPLOY){
+                  outputText += NODEPLOY + "<br>";
+                } else {
+                  outputText +=
+                  deployment.deploymentName.split("-")[1] +
+                  " (" + deployment.deploymentName.split("-")[2] + ")" +
+                  " : " +
+                  deployment.deployed +
+                  "<br>";
+                }
+              } 
+              break;
+            }
+          }
+        }
+        outputText += ("\n");
+      }
+      
+    }
+    
+  }
+  outputText += writeLine(headerLength,"^") + ("\n");
+  console.log(outputText);
 }
 
 function getRowStyle(server) {
