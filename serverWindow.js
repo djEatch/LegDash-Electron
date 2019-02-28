@@ -4,6 +4,7 @@ const bootstrap = require("bootstrap"); //required even though not called!!
 var $ = require("jquery");
 
 let serverList = [];
+let printList = [];
 
 ipcRenderer.on("showServerList", function(e, _serverList) {
     serverList = _serverList;
@@ -23,7 +24,7 @@ ipcRenderer.on("showServerList", function(e, _serverList) {
 //   newList.classList = "w-100 btn btn-secondary dropdown-toggle";
 //   dropDownDivSubEnv.appendChild(newList);
 //   newList.id = "dropDownSubEnv";
-
+  printList = tempServerList;
   showList(tempServerList);
 
 });
@@ -96,3 +97,34 @@ function onlyUnique(value, index, self) {
 
     }
   }
+
+  ipcRenderer.on("exportResults", exportResults);
+
+function writeLine(_length,textToRepeat){
+  let i = _length;
+  let output = "";
+  while(i--){
+    output += textToRepeat;
+  }
+  return output;
+}
+function exportResults() {
+  let outputText = "";
+
+  outputText += "<b>Hostname</b>,<b>Type</b>,<b>ASM Leg</b>,<b>ASM Status</b>,<b>ASM Availability</b>\n";
+
+  for (item of printList) {
+
+    let serverDetails = getServerDetails(item);
+
+    outputText += serverDetails.hostname + ":" + serverDetails.port + ", ";
+    outputText += serverDetails.type + ", ";
+    outputText += serverDetails.leg + ", ";
+    outputText += serverDetails.status + ", ";
+    outputText += serverDetails.availability + "\n";
+
+  }
+
+
+  console.log(outputText);
+}

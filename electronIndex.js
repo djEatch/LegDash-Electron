@@ -341,13 +341,15 @@ function exportResults() {
     return;
   }
 
+  let headerText = ["VIP Name", "Hostname","ASM Leg","ASM Status", "ASM Avail.", "LB State","LB Leg","Res. Time","Retry","Con. Count", "Dep."];
+  let headerLength = headerText.toString().length
+  
   for (currentLB of tempLBList) {
 
 
     let shortName =
       currentLB.splitEnvName + currentLB.splitServerType + currentLB.splitLeg;
-      let headerText = ["VIP Name", "Hostname","ASM Leg","ASM Status", "ASM Avail.", "LB State","LB Leg","Res. Time","Retry","Con. Count", "Dep."];
-      let headerLength = headerText.toString().length
+
     //console.log(currentLB);
     
     outputText += writeLine(headerLength,"=") + ("\n");
