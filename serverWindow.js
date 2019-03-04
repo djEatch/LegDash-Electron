@@ -111,7 +111,7 @@ function writeLine(_length,textToRepeat){
 function exportResults() {
   let outputText = "";
 
-  outputText += "<b>Hostname</b>,<b>Type</b>,<b>ASM Leg</b>,<b>ASM Status</b>,<b>ASM Availability</b>\n";
+  outputText += "Hostname, Type, ASM Leg, ASM Status, ASM Availability\r\n";
 
   for (item of printList) {
 
@@ -121,10 +121,30 @@ function exportResults() {
     outputText += serverDetails.type + ", ";
     outputText += serverDetails.leg + ", ";
     outputText += serverDetails.status + ", ";
-    outputText += serverDetails.availability + "\n";
+    outputText += serverDetails.availability + "\r\n";
 
   }
 
+  let globalSubEnv = electron.remote.getGlobal("globalSubEnv")
+  writeFile(outputText, "DLA-servers-" + globalSubEnv + "-" + new Date().toISOString() + ".txt");
+  //console.log(outputText);
+}
 
-  console.log(outputText);
+function writeFile(contentString, outputFilename){
+  let file = new Blob([contentString], {type: "text"});
+  if (window.navigator.msSaveOrOpenBlob) { // IE10+
+    window.navigator.msSaveOrOpenBlob(file, outputFilename);
+  }
+  else { // Others
+    let a = document.createElement("a")
+    let url = URL.createObjectURL(file);
+    a.href = url;
+    a.download = outputFilename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);  
+    }, 0); 
+  }
 }

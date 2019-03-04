@@ -352,17 +352,17 @@ function exportResults() {
 
     //console.log(currentLB);
     
-    outputText += writeLine(headerLength,"=") + ("\n");
+    outputText += writeLine(headerLength,"=") + ("\r\n");
     //outputText += "==============================================================\n"
-    outputText += (currentLB.name + " - " + currentLB.state) + ("\n");
-    outputText += writeLine(headerLength,"=") + ("\n");
+    outputText += (currentLB.name + " - " + currentLB.state) + ("\r\n");
+    outputText += writeLine(headerLength,"=") + ("\r\n");
     //outputText += "==============================================================\n"
 
     
 
     outputText += headerText;
-    outputText += ("\n");
-    outputText += writeLine(headerLength,"-") + ("\n");
+    outputText += ("\r\n");
+    outputText += writeLine(headerLength,"-") + ("\r\n");
 
     for (server of serverList) {
       if (server.LBName == currentLB.name) {
@@ -373,7 +373,7 @@ function exportResults() {
               break;
             }
             case "Hostname":{
-              outputText += server.hostname + ":" + server.port + "<br>(" + server.ip + ")" + ", ";
+              outputText += server.hostname + ":" + server.port + " (" + server.ip + ")" + ", ";
               break;
             }
             case "ASM Leg":{
@@ -410,28 +410,49 @@ function exportResults() {
             case "Dep.":{
               for (deployment of server.deployments) {
                 if(deployment == NODEPLOY){
-                  outputText += NODEPLOY + "<br>";
+                  outputText += NODEPLOY + " & ";
                 } else {
                   outputText +=
                   deployment.deploymentName.split("-")[1] +
                   " (" + deployment.deploymentName.split("-")[2] + ")" +
                   " : " +
                   deployment.deployed +
-                  "<br>";
+                  " & ";
                 }
               } 
               break;
             }
           }
         }
-        outputText += ("\n");
+        outputText += ("\r\n");
       }
       
     }
     
   }
-  outputText += writeLine(headerLength,"^") + ("\n");
-  console.log(outputText);
+  outputText += writeLine(headerLength,"^") + ("\r\n");
+  let globalSubEnv = electron.remote.getGlobal("globalSubEnv")
+  writeFile(outputText, "DLA-vips-" + globalSubEnv + "-" + new Date().toISOString() + ".txt");
+  //console.log(outputText);
+}
+
+function writeFile(contentString, outputFilename){
+  let file = new Blob([contentString], {type: "text"});
+  if (window.navigator.msSaveOrOpenBlob) { // IE10+
+    window.navigator.msSaveOrOpenBlob(file, outputFilename);
+  }
+  else { // Others
+    let a = document.createElement("a")
+    let url = URL.createObjectURL(file);
+    a.href = url;
+    a.download = outputFilename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);  
+    }, 0); 
+  }
 }
 
 function getRowStyle(server) {
@@ -697,6 +718,7 @@ function setupSubEnvDropDown() {
   pickSubEnvBtn.classList = "btn btn-primary btn-block";
   pickSubEnvBtn.addEventListener("click", function() {
     currentSubEnv = newList.value;
+    ipcRenderer.send("setGlobalSubEnv", humanEnvName(newList.value));
     getServerListFromSubLBList(currentSubEnv);
   });
   btnDivSubEnv.appendChild(pickSubEnvBtn);

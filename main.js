@@ -58,6 +58,10 @@ app.on("ready", function() {
   Menu.setApplicationMenu(winMenu);
 });
 
+ipcMain.on( "setGlobalSubEnv", ( e, _subEnvName ) => {
+  global.globalSubEnv = _subEnvName;
+} );
+
 ipcMain.on("showServerWindow", function(e, data) {
   serverWin = new BrowserWindow({
     show: false,
