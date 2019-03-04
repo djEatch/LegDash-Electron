@@ -855,7 +855,16 @@ function processServers() {
     lbServer.ASMleg = "querying...";
     lbServer.availability = null;
     lbServer.status = null;
-    lbServer.LBLeg = lbServer.servicegroupname.split("-")[2];
+    //lbServer.LBLeg = lbServer.servicegroupname.split("-")[2];
+    ///////////////////////////////////////////////////////
+    lbServer.LBLeg = lbServer.servicegroupname.split("-")[2]; // to work around naming convention issues
+    let pos = lbServer.servicegroupname.search("-([^-])-");
+        if(pos > 0){
+          lbServer.LBLeg = lbServer.servicegroupname.substr(pos+1,1);
+        } else {
+          lbServer.LBLeg = lbServer.servicegroupname.split("-")[2]
+        }
+    ///////////////////////////////////////////////////////
     lbServer.deployments = [];
   }
 
