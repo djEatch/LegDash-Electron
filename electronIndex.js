@@ -2,6 +2,7 @@ const electron = require("electron");
 const { ipcRenderer } = electron;
 const bootstrap = require("bootstrap"); //required even though not called!!
 var $ = require("jquery");
+//var Mousetrap = require('mousetrap');
 
 let serverList = [];
 let envTypeList;
@@ -310,6 +311,150 @@ function drawMultiTables() {
   }
 }
 
+ipcRenderer.on("exportResults", exportResults);
+
+function writeLine(_length,textToRepeat){
+  let i = _length;
+  let output = "";
+  while(i--){
+    output += textToRepeat;
+  }
+  return output;
+}
+function exportResults() {
+  let tempLBList = [];
+
+  let outputText = "";
+
+  tempLBList = currentSubLBList;
+  tempLBList.sort(function(a, b) {
+    x = a.name.toLowerCase();
+    y = b.name.toLowerCase();
+    if (x < y) {
+      return -1;
+    } else if (x > y) {
+      return 1;
+    } else return 0;
+  });
+
+  if (serverList.length < 1) {
+    return;
+  }
+
+  let headerText = ["VIP Name", "Hostname","ASM Leg","ASM Status", "ASM Avail.", "LB State","LB Leg","Res. Time","Retry","Con. Count", "Dep."];
+  let headerLength = headerText.toString().length
+  
+  for (currentLB of tempLBList) {
+
+
+    let shortName =
+      currentLB.splitEnvName + currentLB.splitServerType + currentLB.splitLeg;
+
+    //console.log(currentLB);
+    
+    outputText += writeLine(headerLength,"=") + ("\r\n");
+    //outputText += "==============================================================\n"
+    outputText += (currentLB.name + " - " + currentLB.state) + ("\r\n");
+    outputText += writeLine(headerLength,"=") + ("\r\n");
+    //outputText += "==============================================================\n"
+
+    
+
+    outputText += headerText;
+    outputText += ("\r\n");
+    outputText += writeLine(headerLength,"-") + ("\r\n");
+
+    for (server of serverList) {
+      if (server.LBName == currentLB.name) {
+        for (heading of headerText){
+          switch(heading){
+            case "VIP Name":{
+              outputText += server.VIPname + ", ";
+              break;
+            }
+            case "Hostname":{
+              outputText += server.hostname + ":" + server.port + " (" + server.ip + ")" + ", ";
+              break;
+            }
+            case "ASM Leg":{
+              outputText +=  server.ASMleg + ", ";
+              break;
+            }
+            case "ASM Status":{
+              outputText += server.status + ", ";
+              break;
+            }
+            case "ASM Avail.":{
+              outputText += server.availability + ", ";
+              break;
+            }
+            case "LB State":{
+              outputText += server.state + ", ";
+              break;
+            }
+            case "LB Leg":{
+              outputText += server.LBLeg + ", ";
+              break;
+            }
+            case "Res. Time":{
+              outputText += server.responseTime + ", ";
+              break;
+            }
+            case "Retry":{
+              break;
+            }
+            case "Con. Count":{
+              outputText += server.cursrvrconnections+ ", ";
+              break;
+            }
+            case "Dep.":{
+              for (deployment of server.deployments) {
+                if(deployment == NODEPLOY){
+                  outputText += NODEPLOY + " & ";
+                } else {
+                  outputText +=
+                  deployment.deploymentName.split("-")[1] +
+                  " (" + deployment.deploymentName.split("-")[2] + ")" +
+                  " : " +
+                  deployment.deployed +
+                  " & ";
+                }
+              } 
+              break;
+            }
+          }
+        }
+        outputText += ("\r\n");
+      }
+      
+    }
+    
+  }
+  outputText += writeLine(headerLength,"^") + ("\r\n");
+  let globalSubEnv = electron.remote.getGlobal("globalSubEnv")
+  writeFile(outputText, "DLA-vips-" + globalSubEnv + "-" + new Date().toISOString() + ".txt");
+  //console.log(outputText);
+}
+
+function writeFile(contentString, outputFilename){
+  let file = new Blob([contentString], {type: "text"});
+  if (window.navigator.msSaveOrOpenBlob) { // IE10+
+    window.navigator.msSaveOrOpenBlob(file, outputFilename);
+  }
+  else { // Others
+    let a = document.createElement("a")
+    let url = URL.createObjectURL(file);
+    a.href = url;
+    a.download = outputFilename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);  
+    }, 0); 
+  }
+}
+
 function getRowStyle(server) {
   if (server.ASMleg == "querying...") {
     //no results yet as it's querying
@@ -573,6 +718,7 @@ function setupSubEnvDropDown() {
   pickSubEnvBtn.classList = "btn btn-primary btn-block";
   pickSubEnvBtn.addEventListener("click", function() {
     currentSubEnv = newList.value;
+    ipcRenderer.send("setGlobalSubEnv", humanEnvName(newList.value));
     getServerListFromSubLBList(currentSubEnv);
   });
   btnDivSubEnv.appendChild(pickSubEnvBtn);
@@ -709,7 +855,16 @@ function processServers() {
     lbServer.ASMleg = "querying...";
     lbServer.availability = null;
     lbServer.status = null;
-    lbServer.LBLeg = lbServer.servicegroupname.split("-")[2];
+    //lbServer.LBLeg = lbServer.servicegroupname.split("-")[2];
+    ///////////////////////////////////////////////////////
+    lbServer.LBLeg = lbServer.servicegroupname.split("-")[2]; // to work around naming convention issues
+    let pos = lbServer.servicegroupname.search("-([^-])-");
+        if(pos > 0){
+          lbServer.LBLeg = lbServer.servicegroupname.substr(pos+1,1);
+        } else {
+          lbServer.LBLeg = lbServer.servicegroupname.split("-")[2]
+        }
+    ///////////////////////////////////////////////////////
     lbServer.deployments = [];
   }
 

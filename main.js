@@ -58,6 +58,10 @@ app.on("ready", function() {
   Menu.setApplicationMenu(winMenu);
 });
 
+ipcMain.on( "setGlobalSubEnv", ( e, _subEnvName ) => {
+  global.globalSubEnv = _subEnvName;
+} );
+
 ipcMain.on("showServerWindow", function(e, data) {
   serverWin = new BrowserWindow({
     show: false,
@@ -221,8 +225,11 @@ app.on(
 
 const template = [
   {
-    label: "Edit",
-    submenu: [{ role: "copy" }, { role: "selectall" }]
+    label: "ExportResults",
+    accelerator: "CmdOrCtrl+S",
+    click(item, focusedWindow) {
+      if (focusedWindow) focusedWindow.webContents.send("exportResults");
+    }
   },
   {
     label: "View",
