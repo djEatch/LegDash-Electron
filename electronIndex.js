@@ -656,7 +656,7 @@ function pickedEnvType(_envType) {
   }
 
   if ((currentMLB = getMasterLBForEnvType(_envType))) {
-    let masterLBAddress = "http://" + currentMLB.hostname + currentMLB.endpoint;
+    let masterLBAddress = currentMLB.protocol + "://" + currentMLB.hostname + currentMLB.endpoint;
     getRequest(
       gotSubLBList,
       masterLBAddress,
@@ -790,7 +790,7 @@ function getServerListFromSubLBList(_selectedEnvName) {
   for (subLB of currentSubLBList) {
     if (subLB.splitEnvName == _selectedEnvName) {
       let subLBAddress =
-        "http://" +
+        currentMLB.protocol + "://" +
         currentMLB.hostname +
         currentMLB.endpoint +
         "/" +

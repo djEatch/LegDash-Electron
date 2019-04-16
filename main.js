@@ -99,8 +99,8 @@ function getMasterLBList() {
       let myEnv = new MasterLB(
         data[0].replace(/['"]+/g, ""),
         data[1].replace(/['"]+/g, ""),
-        data[2].replace(/['"]+/g, "") //,
-        //data[3].replace(/['"]+/g, ""),
+        data[2].replace(/['"]+/g, ""),
+        data[3].replace(/['"]+/g, "")//,
         //data[4].replace(/['"]+/g, "")
       );
       masterLBList.push(myEnv);
@@ -176,10 +176,11 @@ class ServCount {
 }
 
 class MasterLB {
-  constructor(envname, hostname, endpoint, username, password) {
+  constructor(envname, hostname, endpoint, protocol, username, password) {
     this.envname = envname;
     this.hostname = hostname;
     this.endpoint = endpoint;
+    this.protocol = protocol;
     this.username = username;
     this.password = password;
   }
