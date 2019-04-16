@@ -212,7 +212,7 @@ app.on("activate", () => {
 app.on(
   "certificate-error",
   (event, webContents, url, error, certificate, callback) => {
-    let regEx = new RegExp("^https://.+corp.internal:");
+    let regEx = new RegExp("^https");
     let res = regEx.exec(url);
     if (res) {
       // Verification logic.
