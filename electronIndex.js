@@ -734,7 +734,7 @@ function gotSubLBList(data) {
         //let subtext = subLB.name.split("-");
         if(subLB.name.indexOf("-EAS-")>0){
           subLB.splitServerType = "EAS";
-        } else if (subLB.name.indexOf("-UIS-">0)){
+        } else if (subLB.name.indexOf("-UIS-")>0){
           subLB.splitServerType = "UIS";
         } else {
           subLB.splitEnvName = "ERROR";
@@ -1155,7 +1155,7 @@ function maintMode(action, server) {
         postedMaint,
         "https://" +
           server.ip +
-          ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode(int,boolean)",
+          ":"+server.port+"/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode(int,boolean)",
         "param=" + timeoutSeconds + "&param=false&executed=true",
         "Basic " + btoa(currentJMXuser.userName + ":" + currentJMXuser.passWord),
         action,
@@ -1171,7 +1171,7 @@ function maintMode(action, server) {
         postedMaint,
         "https://" +
           server.ip +
-          ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/unsetMaintenanceMode()",
+          ":"+server.port+"/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/unsetMaintenanceMode()",
         "executed=true",
         "Basic " + btoa(currentJMXuser.userName + ":" + currentJMXuser.passWord),
         action,
