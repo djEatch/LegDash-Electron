@@ -730,7 +730,7 @@ function gotSubLBList(data) {
     let masterLBResponse = JSON.parse(data);
     fullSubLBList = masterLBResponse.lbvserver;
     for (let subLB of fullSubLBList) {
-      if((subLB.name.split("-").length - 1) == 8 || (subLB.name.split("-").length - 1) == 7){ //the OR 7 is to pick up badly named VIPs
+      if((((subLB.name.split("-").length - 1) == 8 || (subLB.name.split("-").length - 1) == 7))&&(subLB.name.indexOf("-PMS-")>0)){ //the OR 7 is to pick up badly named VIPs
         //let subtext = subLB.name.split("-");
         if(subLB.name.indexOf("-EAS-")>0){
           subLB.splitServerType = "EAS";

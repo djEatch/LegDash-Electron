@@ -1,6 +1,6 @@
 {
   "name": "electron-leg-dash",
-  "version": "3.2.8",
+  "version": "3.2.9",
   "description": "electron application to report current leg assignments for a given list of servers",
   "main": "main.js",
   "scripts": {
